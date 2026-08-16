@@ -81,6 +81,7 @@ rich-text body, no repeatable entries.
 
 | Method | Path | Body | Response |
 |---|---|---|---|
+| GET | `/sections/:sectionId/freeform` | — | `{ description: string \| null }` |
 | PATCH | `/sections/:sectionId/freeform` | `{ description: string \| null }` | `Section` |
 
 ## Templates (`templates.ts`)
