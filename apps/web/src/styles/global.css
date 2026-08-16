@@ -1,5 +1,12 @@
 @import "./fonts.css";
 @import "./tokens.css";
+/* @cv-maker/cv-render's stylesheet — every <CvDocument> render (template
+ * gallery preview, any future in-page preview) goes through the same
+ * component tree as the server-side PDF export, but only the export pipeline
+ * inlines this CSS by hand; the browser needs it loaded like any other
+ * stylesheet. Scoped entirely under `.cv-document` in that package, so it's
+ * safe to load globally rather than only on the pages that use it. */
+@import "@cv-maker/cv-render/styles.css";
 
 @tailwind base;
 @tailwind components;
@@ -27,4 +34,38 @@ h1, h2, h3, h4 {
 :focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
+}
+
+/* Sparse, purposeful motion (brand doc "Motion" section) — fade-up on scroll
+ * for section entrances, applied once via IntersectionObserver in
+ * src/layouts/ScrollReveal.astro. Respects reduced-motion. */
+[data-animate="fade-up"] {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity var(--duration-standard) var(--ease-standard),
+    transform var(--duration-standard) var(--ease-standard);
+}
+[data-animate="fade-up"].is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-animate="fade-up"] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Slow float loop for hero/marketing accent cards — brand doc: 3.5–5s loops. */
+@keyframes float-loop {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+[data-animate="float"] {
+  animation: float-loop var(--duration-float) var(--ease-standard) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-animate="float"] { animation: none; }
 }

@@ -1,0 +1,45 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { CURRENT_TERMS_VERSION } from "@/domains/auth/api";
+---
+
+<BaseLayout title="Privacy Policy" surface="light">
+  <div class="mx-auto max-w-2xl px-5 py-16 sm:px-8">
+    <p class="eyebrow text-xs text-orange">Legal</p>
+    <h1 class="mt-2 font-display text-3xl font-extrabold tracking-tight text-heading">Privacy Policy</h1>
+    <p class="mt-1 text-xs text-text-muted">Version {CURRENT_TERMS_VERSION}</p>
+
+    <div class="mt-8 flex flex-col gap-5 text-sm leading-relaxed text-body">
+      <p>
+        This Privacy Policy explains what data CV Maker (built and operated by Flathire) collects and why.
+      </p>
+      <p>
+        <strong class="text-heading">Account data.</strong> Your account email and password (stored as a
+        salted hash, never in plain text) are kept separately from any email address you choose to put on
+        your CV itself — the two are never assumed to be the same.
+      </p>
+      <p>
+        <strong class="text-heading">CV content.</strong> Everything you type into a CV — personal details,
+        work history, education, and any uploaded photo — is stored so you can keep editing it, and is used
+        only to render your previews and exports. We do not sell CV content or share it with third parties
+        for advertising.
+      </p>
+      <p>
+        <strong class="text-heading">Photo uploads.</strong> Only the final, cropped photo you save is
+        stored — the original unedited upload is discarded after cropping.
+      </p>
+      <p>
+        <strong class="text-heading">Billing data.</strong> Payments are processed by Stripe; we store a
+        subscription status and Stripe's own customer/subscription identifiers, never your raw card details.
+      </p>
+      <p>
+        <strong class="text-heading">Your rights.</strong> You can export or delete your CVs at any time
+        from your dashboard, and can request full account deletion by contacting us.
+      </p>
+      <p class="text-text-muted">
+        This is a working placeholder for the product build — replace with reviewed legal copy (including
+        an LGPD/GDPR-compliant basis for processing) before taking real user data to production.
+      </p>
+    </div>
+  </div>
+</BaseLayout>

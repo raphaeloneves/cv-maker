@@ -1,0 +1,153 @@
+---
+/**
+ * Site-wide header nav — marketing pages (dark surface) and light "builder"
+ * surfaces alike. Mostly static Astro markup (no React island needed for a
+ * nav bar); the only interactivity, the mobile menu disclosure and the
+ * builderUiLocale toggle, is handled by a small vanilla script element at
+ * the bottom rather than pulling in a React island for a nav bar.
+ *
+ * Locale: rendered at build time in DEFAULT_LOCALE ("en"); the strings
+ * tagged data-i18n are swapped client-side by LocaleHydration.astro
+ * (included once by BaseLayout) if the visitor has a stored pt-PT
+ * preference — see src/lib/locale.ts for the full explanation.
+ *
+ * (Note: this comment deliberately avoids spelling out the script element's
+ * tag name in angle brackets — even inside a comment, that substring can
+ * desync Vite's lightweight dependency-scan parser for .astro frontmatter
+ * and produce a confusing "Expected ';'" error in dev mode only, never in a
+ * production build.)
+ */
+import { t } from "@/i18n";
+import { DEFAULT_LOCALE } from "@/lib/locale";
+
+interface Props {
+  surface?: "light" | "dark";
+}
+const { surface = "dark" } = Astro.props;
+const locale = DEFAULT_LOCALE;
+const isDark = surface === "dark";
+---
+
+<header
+  class:list={[
+    "sticky top-0 z-40 border-b backdrop-blur",
+    isDark
+      ? "border-[var(--border-on-dark)] bg-navy-deep/90 text-white"
+      : "border-[var(--border-on-light)] bg-surface-page/90 text-heading",
+  ]}
+>
+  <div class="mx-auto flex max-w-6xl items-center justify-between px-5 py-3 sm:px-8">
+    <a href="/" class="flex items-baseline gap-1.5 font-display font-extrabold tracking-tight">
+      <span class={isDark ? "text-white" : "text-heading"}>CV</span>
+      <span class="text-orange">Maker</span>
+    </a>
+
+    <nav class="hidden items-center gap-6 md:flex" aria-label="Primary">
+      <a href="/" data-i18n="nav.home" class="text-sm font-medium opacity-80 transition-opacity hover:opacity-100">
+        {t(locale, "nav.home")}
+      </a>
+      <a
+        href="/pricing"
+        data-i18n="nav.pricing"
+        class="text-sm font-medium opacity-80 transition-opacity hover:opacity-100"
+      >
+        {t(locale, "nav.pricing")}
+      </a>
+      <a
+        href="/dashboard"
+        data-i18n="nav.dashboard"
+        class="text-sm font-medium opacity-80 transition-opacity hover:opacity-100"
+      >
+        {t(locale, "nav.dashboard")}
+      </a>
+    </nav>
+
+    <div class="flex items-center gap-2 sm:gap-3">
+      <button
+        id="locale-toggle"
+        type="button"
+        aria-label="Switch language"
+        class={`mono-label rounded-md border px-2 py-1 text-[11px] transition-colors duration-fast ease-standard ${
+          isDark
+            ? "border-[var(--border-on-dark)] text-ice hover:bg-navy-mid"
+            : "border-[var(--border-on-light)] text-body hover:bg-surface-sunken"
+        }`}
+      >
+        <span data-i18n="nav.localeToggle">{t(locale, "nav.localeToggle")}</span>
+      </button>
+      <span id="nav-guest" class="flex items-center gap-2 sm:gap-3">
+        <a
+          href="/login"
+          data-i18n="nav.login"
+          class={`hidden text-sm font-medium sm:inline ${isDark ? "text-ice/90 hover:text-white" : "text-body hover:text-heading"}`}
+        >
+          {t(locale, "nav.login")}
+        </a>
+        <a
+          href="/signup"
+          data-i18n="nav.startFree"
+          class="inline-flex items-center rounded-md bg-orange px-3.5 py-2 text-sm font-semibold text-white transition-colors duration-fast ease-standard hover:bg-accent-hover"
+        >
+          {t(locale, "nav.startFree")}
+        </a>
+      </span>
+      <span id="nav-authed" class="hidden items-center gap-2 sm:gap-3">
+        <a
+          href="/dashboard"
+          data-i18n="nav.dashboard"
+          class={`hidden text-sm font-medium sm:inline ${isDark ? "text-ice/90 hover:text-white" : "text-body hover:text-heading"}`}
+        >
+          {t(locale, "nav.dashboard")}
+        </a>
+        <button
+          type="button"
+          id="nav-logout"
+          data-i18n="nav.logout"
+          class={`inline-flex items-center rounded-md border px-3.5 py-2 text-sm font-semibold transition-colors duration-fast ease-standard ${
+            isDark
+              ? "border-[var(--border-on-dark)] text-ice hover:bg-navy-mid"
+              : "border-[var(--border-on-light)] text-heading hover:bg-surface-sunken"
+          }`}
+        >
+          {t(locale, "nav.logout")}
+        </button>
+      </span>
+    </div>
+  </div>
+</header>
+
+<script>
+  import { getStoredLocale, setStoredLocale, otherLocale } from "@/lib/locale";
+  import { refreshSession } from "@/lib/api-client";
+  import { logOut } from "@/domains/auth/api";
+
+  const toggle = document.getElementById("locale-toggle");
+  toggle?.addEventListener("click", () => {
+    setStoredLocale(otherLocale(getStoredLocale()));
+    window.location.reload();
+  });
+
+  // Nav is otherwise static Astro markup with no per-request auth context
+  // (see the file-level comment) — this is the one place it needs to know
+  // whether the visitor is signed in, so it silently tries to derive a
+  // session from the httpOnly refresh cookie on every page load and swaps
+  // the guest/authed button groups accordingly. Failure just means "signed
+  // out," not an error — swallowed on purpose.
+  const guestGroup = document.getElementById("nav-guest");
+  const authedGroup = document.getElementById("nav-authed");
+  refreshSession()
+    .then((session) => {
+      if (!session) return;
+      guestGroup?.classList.add("hidden");
+      authedGroup?.classList.remove("hidden");
+      authedGroup?.classList.add("flex");
+    })
+    .catch(() => {
+      /* not signed in — guest nav (the default) is already showing */
+    });
+
+  document.getElementById("nav-logout")?.addEventListener("click", async () => {
+    await logOut();
+    window.location.href = "/";
+  });
+</script>

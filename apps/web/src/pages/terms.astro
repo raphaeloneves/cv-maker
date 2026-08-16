@@ -1,0 +1,44 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { CURRENT_TERMS_VERSION } from "@/domains/auth/api";
+---
+
+<BaseLayout title="Terms of Service" surface="light">
+  <div class="mx-auto max-w-2xl px-5 py-16 sm:px-8">
+    <p class="eyebrow text-xs text-orange">Legal</p>
+    <h1 class="mt-2 font-display text-3xl font-extrabold tracking-tight text-heading">Terms of Service</h1>
+    <p class="mt-1 text-xs text-text-muted">Version {CURRENT_TERMS_VERSION}</p>
+
+    <div class="mt-8 flex flex-col gap-5 text-sm leading-relaxed text-body">
+      <p>
+        These Terms of Service govern your use of CV Maker, a product built and operated by Flathire
+        ("we", "us"). By creating an account you agree to the version of these terms shown above.
+      </p>
+      <p>
+        <strong class="text-heading">The service.</strong> CV Maker lets you build, preview, and export
+        CVs. Every account can create an unlimited number of CVs, use every section type, and export a
+        watermarked PDF at no cost, indefinitely. Paid subscriptions remove the watermark and unlock
+        additional templates; they do not gate any other part of the product.
+      </p>
+      <p>
+        <strong class="text-heading">Your content.</strong> You retain all rights to the content you enter
+        into your CVs. We store it so you can come back and keep editing, and process it only as needed
+        to render your previews and exports.
+      </p>
+      <p>
+        <strong class="text-heading">Billing.</strong> Paid plans are billed in advance and can be
+        cancelled at any time from your account; cancellation takes effect at the end of the period
+        already paid for.
+      </p>
+      <p>
+        <strong class="text-heading">Changes.</strong> If we materially change these terms, we'll ask
+        existing account holders to review and re-accept the new version the next time it matters (for
+        example, before a billing change takes effect).
+      </p>
+      <p class="text-text-muted">
+        This is a working placeholder for the product build — replace with reviewed legal copy before
+        taking real payments or real user data to production.
+      </p>
+    </div>
+  </div>
+</BaseLayout>

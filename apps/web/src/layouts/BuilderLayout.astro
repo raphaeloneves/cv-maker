@@ -1,0 +1,30 @@
+---
+/**
+ * Shared shell for all 4 builder step pages (`/builder/personal-info`,
+ * `/builder/content`, `/builder/template`, `/builder/checkout`) — light
+ * "Ice" builder surface, no marketing footer, persistent progress stepper
+ * pinned above the step's own content. `currentStep`/step labels/paths are
+ * always derived from `BUILDER_STEPS` (via `<BuilderStepper>`), never
+ * hand-typed per page, so route/heading/stepper-label can't drift apart
+ * (features/16). Intentionally generic so every builder step page — not
+ * just the ones owned in this pass — can use it.
+ */
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { BuilderStepper } from "@/components/nav/BuilderStepper";
+import type { BuilderStepKey } from "@cv-maker/contracts";
+
+interface Props {
+  title: string;
+  currentStep: BuilderStepKey;
+}
+const { title, currentStep } = Astro.props;
+---
+
+<BaseLayout title={title} surface="light" showFooter={false}>
+  <div class="min-h-[calc(100vh-57px)] px-5 py-8 sm:px-8 sm:py-10">
+    <div class="mb-8 flex justify-center sm:mb-12">
+      <BuilderStepper client:load currentStep={currentStep} />
+    </div>
+    <slot />
+  </div>
+</BaseLayout>

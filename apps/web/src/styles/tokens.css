@@ -76,3 +76,19 @@
   --text-muted: var(--muted);
   --border-on-light: var(--border-on-dark);
 }
+
+/* Explicit light reset — needed because a marketing page alternates dark/light
+ * *sections* (per the brand doc) while `data-surface` is normally only set
+ * once on <body>. Custom properties inherit down the DOM tree, so a nested
+ * `[data-surface="light"]` section inside a dark ancestor needs its own rule
+ * to actually flip back, not just "the absence of dark" (there's no bare
+ * selector for that). Mirrors the same semantic tokens as bare :root. */
+[data-surface="light"] {
+  --surface-page: var(--ice);
+  --surface-card: var(--white);
+  --surface-sunken: #dfe6f2;
+  --text-heading: var(--navy-deep);
+  --text-body: var(--body-on-light);
+  --text-muted: #6b7a99;
+  --border-on-light: rgba(10, 22, 40, 0.1);
+}

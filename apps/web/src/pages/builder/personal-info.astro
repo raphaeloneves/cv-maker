@@ -1,0 +1,8 @@
+---
+import BuilderLayout from "@/layouts/BuilderLayout.astro";
+import { PersonalInfoStep } from "@/domains/personal-info/components/PersonalInfoStep";
+---
+
+<BuilderLayout title="Personal details" currentStep="personal-info">
+  <PersonalInfoStep client:load />
+</BuilderLayout>

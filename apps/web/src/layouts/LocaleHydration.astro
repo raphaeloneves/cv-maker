@@ -1,0 +1,27 @@
+---
+/**
+ * Runs once per page load. Swaps every `[data-i18n="<key>"]` element's
+ * `textContent` from the same `RESOURCES` map `t()` reads, when the visitor
+ * has a stored `builderUiLocale` preference that differs from the
+ * build-time default ("en") that Astro pages render statically — see
+ * src/lib/locale.ts for why this indirection exists (no Astro SSR, so there
+ * is no per-request server that could pick a locale before render).
+ * React islands don't need this — they call `t(locale, key)` directly.
+ */
+---
+
+<script>
+  import { RESOURCES } from "@/i18n";
+  import { getStoredLocale, DEFAULT_LOCALE } from "@/lib/locale";
+
+  const locale = getStoredLocale();
+  document.documentElement.lang = locale;
+
+  if (locale !== DEFAULT_LOCALE) {
+    const dict = RESOURCES[locale];
+    document.querySelectorAll<HTMLElement>("[data-i18n]").forEach((el) => {
+      const key = el.dataset.i18n;
+      if (key && dict[key]) el.textContent = dict[key];
+    });
+  }
+</script>

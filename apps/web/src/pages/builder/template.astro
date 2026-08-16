@@ -1,0 +1,9 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { TemplateGalleryIsland } from "@/domains/templates/TemplateGalleryIsland";
+---
+<BaseLayout title="Choose a template">
+  <main class="mx-auto flex min-h-screen max-w-6xl flex-col gap-6 px-6 py-10">
+    <TemplateGalleryIsland client:load />
+  </main>
+</BaseLayout>

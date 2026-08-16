@@ -1,0 +1,110 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { t } from "@/i18n";
+import { DEFAULT_LOCALE } from "@/lib/locale";
+const locale = DEFAULT_LOCALE;
+
+const freeFeatures = ["cvs", "sections", "templates", "export", "autosave"] as const;
+const proFeatures = ["everything", "watermark", "templates", "cancel"] as const;
+const faqs = ["q1", "q2", "q3"] as const;
+---
+
+<BaseLayout title="Pricing" description="One free plan, one upgrade, no surprises." surface="dark">
+  <section class="px-5 pb-20 pt-16 sm:px-8 sm:pb-28 sm:pt-20">
+    <div class="mx-auto max-w-2xl text-center" data-animate="fade-up">
+      <p class="eyebrow text-xs text-orange" data-i18n="pricing.eyebrow">{t(locale, "pricing.eyebrow")}</p>
+      <h1 class="mt-3 font-display text-4xl font-extrabold tracking-tight text-white" data-i18n="pricing.title">
+        {t(locale, "pricing.title")}
+      </h1>
+      <p class="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-ice/70" data-i18n="pricing.subtitle">
+        {t(locale, "pricing.subtitle")}
+      </p>
+    </div>
+
+    <div class="mx-auto mt-14 grid max-w-3xl gap-6 sm:grid-cols-2">
+      <!-- Free plan -->
+      <div data-animate="fade-up" class="flex flex-col rounded-lg border border-[var(--border-on-dark)] bg-navy-mid p-7">
+        <p class="mono-label text-[11px] text-orange-warm" data-i18n="pricing.free.name">{t(locale, "pricing.free.name")}</p>
+        <div class="mt-3 flex items-baseline gap-1.5">
+          <span class="font-display text-4xl font-extrabold text-white" data-i18n="pricing.free.price">
+            {t(locale, "pricing.free.price")}
+          </span>
+          <span class="text-sm text-muted" data-i18n="pricing.free.period">{t(locale, "pricing.free.period")}</span>
+        </div>
+        <ul class="mt-6 flex flex-1 flex-col gap-3 text-sm text-ice/85">
+          {
+            freeFeatures.map((key) => (
+              <li class="flex items-start gap-2.5">
+                <span class="mt-0.5 text-success">✓</span>
+                <span data-i18n={`pricing.free.feature.${key}`}>{t(locale, `pricing.free.feature.${key}`)}</span>
+              </li>
+            ))
+          }
+        </ul>
+        <a
+          href="/signup"
+          data-i18n="pricing.free.cta"
+          class="mt-7 inline-flex items-center justify-center rounded-md border border-[var(--border-on-dark)] px-5 py-2.5 text-sm font-semibold text-ice transition-colors duration-fast ease-standard hover:bg-navy-light"
+        >
+          {t(locale, "pricing.free.cta")}
+        </a>
+      </div>
+
+      <!-- Pro plan -->
+      <div data-animate="fade-up" class="relative flex flex-col rounded-lg border border-orange/50 bg-navy-mid p-7">
+        <span
+          data-i18n="pricing.pro.badge"
+          class="absolute -top-3 right-6 rounded-pill bg-orange px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white"
+        >
+          {t(locale, "pricing.pro.badge")}
+        </span>
+        <p class="mono-label text-[11px] text-orange-warm" data-i18n="pricing.pro.name">{t(locale, "pricing.pro.name")}</p>
+        <div class="mt-3 flex items-baseline gap-1.5">
+          <span class="font-display text-4xl font-extrabold text-white" data-i18n="pricing.pro.price">
+            {t(locale, "pricing.pro.price")}
+          </span>
+          <span class="text-sm text-muted" data-i18n="pricing.pro.period">{t(locale, "pricing.pro.period")}</span>
+        </div>
+        <ul class="mt-6 flex flex-1 flex-col gap-3 text-sm text-ice/85">
+          {
+            proFeatures.map((key) => (
+              <li class="flex items-start gap-2.5">
+                <span class="mt-0.5 text-orange">✓</span>
+                <span data-i18n={`pricing.pro.feature.${key}`}>{t(locale, `pricing.pro.feature.${key}`)}</span>
+              </li>
+            ))
+          }
+        </ul>
+        <a
+          href="/signup"
+          data-i18n="pricing.pro.cta"
+          class="mt-7 inline-flex items-center justify-center rounded-md bg-orange px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-fast ease-standard hover:bg-accent-hover"
+        >
+          {t(locale, "pricing.pro.cta")}
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section data-surface="light" class="bg-surface-page px-5 py-20 sm:px-8 sm:py-24">
+    <div class="mx-auto max-w-2xl" data-animate="fade-up">
+      <h2 class="text-center font-display text-2xl font-extrabold tracking-tight text-heading" data-i18n="pricing.faq.title">
+        {t(locale, "pricing.faq.title")}
+      </h2>
+      <div class="mt-10 flex flex-col divide-y divide-[var(--border-on-light)]">
+        {
+          faqs.map((key) => (
+            <div class="py-5">
+              <p class="font-semibold text-heading" data-i18n={`pricing.faq.${key}`}>
+                {t(locale, `pricing.faq.${key}`)}
+              </p>
+              <p class="mt-1.5 text-sm leading-relaxed text-text-muted" data-i18n={`pricing.faq.a${key.slice(1)}`}>
+                {t(locale, `pricing.faq.a${key.slice(1)}`)}
+              </p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+</BaseLayout>
