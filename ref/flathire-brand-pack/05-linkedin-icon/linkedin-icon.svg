@@ -1,0 +1,47 @@
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Dark gradient: deep navy bottom-left to navy-mid top-right -->
+    <linearGradient id="bgGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#060E1C;stop-opacity:1" />
+      <stop offset="55%" style="stop-color:#0A1628;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1B3A6B;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Subtle orange radial glow behind the f, centered slightly top-right of center -->
+    <radialGradient id="glowGrad" cx="58%" cy="38%" r="50%">
+      <stop offset="0%" style="stop-color:#E8640C;stop-opacity:0.18" />
+      <stop offset="100%" style="stop-color:#E8640C;stop-opacity:0" />
+    </radialGradient>
+
+    <!-- Clip to rounded square -->
+    <clipPath id="roundClip">
+      <rect width="300" height="300" rx="66" ry="66"/>
+    </clipPath>
+  </defs>
+
+  <!-- Rounded square clip group -->
+  <g clip-path="url(#roundClip)">
+    <!-- Base gradient background -->
+    <rect width="300" height="300" fill="url(#bgGrad)"/>
+
+    <!-- Orange glow layer -->
+    <rect width="300" height="300" fill="url(#glowGrad)"/>
+
+    <!-- Subtle grid texture, same as landing page hero -->
+    <defs>
+      <pattern id="grid" width="22" height="22" patternUnits="userSpaceOnUse">
+        <path d="M 22 0 L 0 0 0 22" fill="none" stroke="rgba(232,237,245,0.03)" stroke-width="0.5"/>
+      </pattern>
+    </defs>
+    <rect width="300" height="300" fill="url(#grid)"/>
+
+    <!-- The f glyph, scaled up proportionally for 300x300 canvas -->
+    <!-- Original favicon: 200x200 canvas, transform: translate(43.34,158.00) scale(0.1681,-0.1681) -->
+    <!-- Scaling factor for 300x300: 300/200 = 1.5 -->
+    <!-- New translate: 43.34 * 1.5 = 65.01, 158.00 * 1.5 = 237.00 -->
+    <!-- New scale: 0.1681 * 1.5 = 0.25215 -->
+    <g transform="translate(65.01,237.00) scale(0.25215,-0.25215)">
+      <path d="M20 460H654V310H20ZM423 690H654V530H523Q483 531 461.5 526.0Q440 521 431.5 506.0Q423 491 423 460V0H183V510Q183 570 205.5 610.0Q228 650 280.5 670.0Q333 690 423 690Z" fill="#E8640C"/>
+    </g>
+  </g>
+</svg>
