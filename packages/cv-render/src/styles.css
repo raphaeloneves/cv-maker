@@ -1,0 +1,780 @@
+/*
+ * packages/cv-render/src/styles.css
+ *
+ * The single, self-contained stylesheet for the 4 CV templates (Helsinki,
+ * Lisbon, Kyoto, Denver). Consumed two ways:
+ *   - apps/web imports this file via its bundler for the live browser preview.
+ *   - apps/api reads it as raw text (fs.readFileSync) and inlines it into the
+ *     Puppeteer HTML wrapper for PDF export.
+ * Both call sites must see byte-identical CSS — this is what pixel-equivalence
+ * between preview and export depends on. No external @import, no CSS Modules,
+ * no CSS-in-JS: plain classes, all scoped under `.cv-document` so importing
+ * this globally never leaks styles onto the host page around it.
+ *
+ * Fonts: font-family values reference "Syne" / "Inter" / "IBM Plex Mono" (the
+ * CV Maker/Flathire brand type system, see apps/web/src/styles/fonts.css)
+ * with full system-font fallback stacks — this file does not embed @font-face
+ * itself, so it degrades gracefully to the fallback stack in any host that
+ * hasn't loaded those faces.
+ */
+
+/* ---------------------------------------------------------------------- */
+/* Print setup                                                            */
+/* ---------------------------------------------------------------------- */
+
+@page {
+  size: A4;
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Base reset + shared tokens, scoped to .cv-document                     */
+/* ---------------------------------------------------------------------- */
+
+.cv-document {
+  /* Fallback accent — always overridden per-CV via an inline
+     `style="--accent: #……"` on this same element (see cv-document.tsx). */
+  --accent: #1b3a6b;
+
+  --cv-ink: #16213a;
+  --cv-body: #3c4a63;
+  --cv-muted: #6b7a99;
+  --cv-paper: #ffffff;
+  --cv-hairline: rgba(10, 22, 40, 0.14);
+  --cv-scrim: rgba(9, 17, 32, 0.58);
+
+  --cv-font-display: "Syne", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --cv-font-body: "Inter", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --cv-font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, "Courier New", monospace;
+
+  position: relative;
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+  background: var(--cv-paper);
+  color: var(--cv-ink);
+  font-family: var(--cv-font-body);
+  font-size: 10pt;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.cv-document,
+.cv-document *,
+.cv-document *::before,
+.cv-document *::after {
+  box-sizing: border-box;
+}
+
+.cv-document h1,
+.cv-document h2,
+.cv-document h3,
+.cv-document p,
+.cv-document ul,
+.cv-document ol,
+.cv-document dl,
+.cv-document dd,
+.cv-document figure {
+  margin: 0;
+  padding: 0;
+}
+
+.cv-document ul,
+.cv-document ol {
+  list-style: none;
+}
+
+.cv-document img {
+  max-width: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.cv-document a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.cv-document strong {
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Pagination correctness — the highest-stakes rendering requirement       */
+/* ---------------------------------------------------------------------- */
+
+.cv-document .cv-entry,
+.cv-document .cv-timeline-entry,
+.cv-document .cv-references__item {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.cv-document .cv-section--break-before {
+  break-before: page;
+  page-break-before: always;
+}
+
+.cv-document .cv-section__title {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Watermark — tasteful diagonal repeat, `position: fixed` so it repeats   */
+/* on every physical page when Puppeteer paginates the export.            */
+/* ---------------------------------------------------------------------- */
+
+.cv-document .cv-watermark {
+  /* `absolute` on screen — contained within `.cv-document` (already
+     `position: relative`), so importing this stylesheet globally for the
+     live browser preview never lets the watermark escape whatever box the
+     document is rendered inside (a template-gallery preview modal, a future
+     inline preview, etc). Puppeteer's PDF export renders in print media,
+     where `fixed` is relative to each *printed page* box instead of the
+     viewport — that's what makes the watermark repeat once per page in the
+     downloaded PDF, restored below. Same stylesheet, no forked logic. */
+  position: absolute;
+  inset: -25%;
+  z-index: 999;
+  overflow: hidden;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media print {
+  .cv-document .cv-watermark {
+    position: fixed;
+  }
+}
+
+.cv-document .cv-watermark__grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 46px 30px;
+  width: 170%;
+  height: 170%;
+  transform: rotate(-28deg);
+}
+
+.cv-document .cv-watermark__text {
+  font-family: var(--cv-font-display);
+  font-weight: 700;
+  font-size: 14pt;
+  letter-spacing: 0.03em;
+  color: rgba(10, 22, 40, 0.065);
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Shared primitives: rich text, contact list, personal details, icons     */
+/* ---------------------------------------------------------------------- */
+
+.cv-document .cv-richtext {
+  color: var(--cv-body);
+  font-size: 9.5pt;
+  line-height: 1.55;
+}
+
+.cv-document .cv-richtext p + p {
+  margin-top: 0.5em;
+}
+
+.cv-document .cv-richtext ul,
+.cv-document .cv-richtext ol {
+  margin: 0.4em 0 0.4em 1.1em;
+  list-style: disc;
+}
+
+.cv-document .cv-richtext ol {
+  list-style: decimal;
+}
+
+.cv-document .cv-richtext li + li {
+  margin-top: 0.15em;
+}
+
+.cv-document .cv-icon {
+  flex: none;
+  width: 1em;
+  height: 1em;
+}
+
+.cv-document .cv-contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6pt;
+}
+
+.cv-document .cv-contact-list__item {
+  display: flex;
+  align-items: center;
+  gap: 6pt;
+  font-family: var(--cv-font-mono);
+  font-size: 8pt;
+  letter-spacing: 0.01em;
+  overflow-wrap: anywhere;
+}
+
+.cv-document .cv-personal-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4pt;
+}
+
+.cv-document .cv-personal-details__row {
+  display: flex;
+  flex-direction: column;
+  gap: 1pt;
+}
+
+.cv-document .cv-personal-details__row dt {
+  font-size: 7pt;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+.cv-document .cv-personal-details__row dd {
+  font-size: 8.5pt;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Sections, timeline entries                                             */
+/* ---------------------------------------------------------------------- */
+
+.cv-document .cv-section + .cv-section {
+  margin-top: 18pt;
+}
+
+.cv-document .cv-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 12pt;
+}
+
+.cv-document .cv-timeline-entry__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10pt;
+}
+
+.cv-document .cv-timeline-entry__heading {
+  font-family: var(--cv-font-display);
+  font-weight: 700;
+  font-size: 10.5pt;
+  color: var(--cv-ink);
+}
+
+.cv-document .cv-timeline-entry__subheading {
+  margin-top: 1pt;
+  font-size: 9pt;
+  color: var(--cv-muted);
+}
+
+.cv-document .cv-timeline-entry__city {
+  color: var(--cv-muted);
+}
+
+.cv-document .cv-timeline-entry__dates {
+  flex: none;
+  font-family: var(--cv-font-mono);
+  font-size: 7.5pt;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+  white-space: nowrap;
+  text-align: right;
+}
+
+.cv-document .cv-timeline-entry__description {
+  margin-top: 4pt;
+}
+
+.cv-document .cv-timeline-entry__credential {
+  margin-top: 4pt;
+  display: flex;
+  align-items: center;
+  gap: 5pt;
+  font-family: var(--cv-font-mono);
+  font-size: 8pt;
+  color: var(--cv-muted);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Meters — bar / dot / text, shared skeleton, template-scoped color/track */
+/* ---------------------------------------------------------------------- */
+
+.cv-document .cv-meter--bar {
+  flex: none;
+  width: 76pt;
+}
+
+.cv-document .cv-meter__track {
+  height: 4pt;
+  border-radius: 999px;
+  background: rgba(10, 22, 40, 0.12);
+  overflow: hidden;
+}
+
+.cv-document .cv-meter__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.cv-document .cv-meter--dot {
+  flex: none;
+  display: flex;
+  gap: 3.5pt;
+}
+
+.cv-document .cv-meter__dot {
+  width: 6.5pt;
+  height: 6.5pt;
+  border-radius: 999px;
+  border: 1pt solid var(--accent);
+  background: transparent;
+}
+
+.cv-document .cv-meter__dot--filled {
+  background: var(--accent);
+}
+
+.cv-document .cv-meter--text {
+  flex: none;
+  font-family: var(--cv-font-mono);
+  font-size: 7.5pt;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Skills / languages / hobbies / references — shared list shapes          */
+/* ---------------------------------------------------------------------- */
+
+.cv-document .cv-skills,
+.cv-document .cv-languages {
+  display: flex;
+  flex-direction: column;
+  gap: 7pt;
+}
+
+.cv-document .cv-skills__item,
+.cv-document .cv-languages__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8pt;
+}
+
+.cv-document .cv-skills__name,
+.cv-document .cv-languages__name {
+  font-size: 9pt;
+}
+
+.cv-document .cv-hobbies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5pt;
+}
+
+.cv-document .cv-hobbies__chip {
+  padding: 3pt 8pt;
+  border-radius: 999px;
+  border: 1pt solid var(--cv-hairline);
+  font-size: 8.5pt;
+}
+
+.cv-document .cv-references {
+  display: flex;
+  flex-direction: column;
+  gap: 9pt;
+}
+
+.cv-document .cv-references__company {
+  font-family: var(--cv-font-display);
+  font-weight: 700;
+  font-size: 9.5pt;
+}
+
+.cv-document .cv-references__contact {
+  font-size: 8.5pt;
+  color: var(--cv-muted);
+}
+
+.cv-document .cv-references__meta {
+  margin-top: 1pt;
+  font-family: var(--cv-font-mono);
+  font-size: 7.5pt;
+  color: var(--cv-muted);
+}
+
+.cv-document .cv-references__notice {
+  font-size: 9pt;
+  font-style: italic;
+  color: var(--cv-muted);
+}
+
+/* ======================================================================= */
+/* HELSINKI — 2-column, left sidebar, bar meters, photo.                   */
+/* Confident/editorial: full-bleed dark sidebar (accent tinted) carrying   */
+/* identity + at-a-glance facts in wide-tracked Syne capitals, beside a    */
+/* calm white column of narrative content.                                */
+/* ======================================================================= */
+
+.cv-document--helsinki .cv-helsinki__page {
+  display: grid;
+  grid-template-columns: 68mm 1fr;
+  min-height: 297mm;
+}
+
+.cv-document--helsinki .cv-helsinki__sidebar {
+  background:
+    linear-gradient(var(--cv-scrim), var(--cv-scrim)),
+    var(--accent);
+  color: #eef1f8;
+  padding: 20mm 12mm;
+  display: flex;
+  flex-direction: column;
+  gap: 16pt;
+}
+
+.cv-document--helsinki .cv-helsinki__identity {
+  display: flex;
+  flex-direction: column;
+  gap: 8pt;
+}
+
+.cv-document--helsinki .cv-helsinki__photo {
+  width: 30mm;
+  height: 30mm;
+  border-radius: 999px;
+  border: 2pt solid rgba(255, 255, 255, 0.35);
+}
+
+.cv-document--helsinki .cv-helsinki__name {
+  font-family: var(--cv-font-display);
+  font-weight: 700;
+  font-size: 17pt;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+}
+
+.cv-document--helsinki .cv-helsinki__headline {
+  font-family: var(--cv-font-mono);
+  font-size: 8pt;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(238, 241, 248, 0.75);
+}
+
+.cv-document--helsinki .cv-helsinki__contact .cv-contact-list__item,
+.cv-document--helsinki .cv-helsinki__personal-details dt,
+.cv-document--helsinki .cv-helsinki__personal-details dd {
+  color: rgba(238, 241, 248, 0.88);
+}
+
+.cv-document--helsinki .cv-helsinki__section .cv-section__title {
+  font-family: var(--cv-font-display);
+  font-weight: 700;
+  font-size: 9pt;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #ffffff;
+  margin-bottom: 8pt;
+  padding-bottom: 5pt;
+  border-bottom: 1pt solid rgba(255, 255, 255, 0.28);
+}
+
+.cv-document--helsinki .cv-helsinki__sidebar .cv-hobbies__chip {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: rgba(238, 241, 248, 0.92);
+}
+
+.cv-document--helsinki .cv-helsinki__sidebar .cv-meter__track {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.cv-document--helsinki .cv-helsinki__sidebar .cv-references__contact,
+.cv-document--helsinki .cv-helsinki__sidebar .cv-references__meta,
+.cv-document--helsinki .cv-helsinki__sidebar .cv-references__notice {
+  color: rgba(238, 241, 248, 0.75);
+}
+
+.cv-document--helsinki .cv-helsinki__main {
+  padding: 20mm 16mm;
+}
+
+.cv-document--helsinki .cv-helsinki__main .cv-section__title {
+  font-family: var(--cv-font-display);
+  font-weight: 700;
+  font-size: 10.5pt;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 9pt;
+  padding-bottom: 5pt;
+  border-bottom: 1.5pt solid var(--cv-hairline);
+}
+
+/* ======================================================================= */
+/* LISBON — single column, dot meters, photo. Warm and editorial: a quiet  */
+/* horizontal header, one generous readable column, accent used sparingly  */
+/* as a rule under section titles and as dot-meter fills.                  */
+/* ======================================================================= */
+
+.cv-document--lisbon .cv-lisbon__page {
+  padding: 20mm 22mm;
+}
+
+.cv-document--lisbon .cv-lisbon__header {
+  display: flex;
+  align-items: center;
+  gap: 14mm;
+  padding-bottom: 14pt;
+  border-bottom: 1.5pt solid var(--cv-hairline);
+}
+
+.cv-document--lisbon .cv-lisbon__photo {
+  width: 28mm;
+  height: 28mm;
+  border-radius: 999px;
+}
+
+.cv-document--lisbon .cv-lisbon__heading-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6pt;
+  flex: 1;
+}
+
+.cv-document--lisbon .cv-lisbon__name {
+  font-family: var(--cv-font-display);
+  font-weight: 700;
+  font-size: 22pt;
+  letter-spacing: -0.01em;
+  color: var(--cv-ink);
+}
+
+.cv-document--lisbon .cv-lisbon__headline {
+  font-size: 10.5pt;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.cv-document--lisbon .cv-lisbon__contact {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 4pt 16pt;
+  margin-top: 4pt;
+}
+
+.cv-document--lisbon .cv-lisbon__personal-details {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 4pt 20pt;
+  padding: 10pt 0;
+  border-bottom: 1.5pt solid var(--cv-hairline);
+}
+
+.cv-document--lisbon .cv-lisbon__personal-details .cv-personal-details__row {
+  flex-direction: row;
+  gap: 4pt;
+  align-items: baseline;
+}
+
+.cv-document--lisbon .cv-lisbon__personal-details dt {
+  color: var(--cv-muted);
+}
+
+.cv-document--lisbon .cv-lisbon__main {
+  padding-top: 18pt;
+}
+
+.cv-document--lisbon .cv-lisbon__section .cv-section__title {
+  font-family: var(--cv-font-display);
+  font-weight: 700;
+  font-size: 10.5pt;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cv-ink);
+  margin-bottom: 9pt;
+  padding-bottom: 6pt;
+  border-bottom: 2pt solid var(--accent);
+  display: inline-block;
+}
+
+/* ======================================================================= */
+/* KYOTO — 2-column, right sidebar, text meters, no photo. Premium.        */
+/* Quiet and typographic: a wide main column set the candidate's name in   */
+/* large Syne, a slender rule-divided sidebar carries facts as plain-text  */
+/* labeled meters rather than any graphical fill.                         */
+/* ======================================================================= */
+
+.cv-document--kyoto .cv-kyoto__page {
+  display: grid;
+  grid-template-columns: 1fr 56mm;
+  min-height: 297mm;
+}
+
+.cv-document--kyoto .cv-kyoto__main {
+  padding: 22mm 16mm 22mm 22mm;
+}
+
+.cv-document--kyoto .cv-kyoto__header {
+  margin-bottom: 20pt;
+}
+
+.cv-document--kyoto .cv-kyoto__name {
+  font-family: var(--cv-font-display);
+  font-weight: 800;
+  font-size: 25pt;
+  letter-spacing: -0.02em;
+  color: var(--cv-ink);
+}
+
+.cv-document--kyoto .cv-kyoto__headline {
+  margin-top: 5pt;
+  font-family: var(--cv-font-mono);
+  font-size: 9pt;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.cv-document--kyoto .cv-kyoto__main .cv-section__title {
+  font-family: var(--cv-font-body);
+  font-weight: 600;
+  font-size: 8pt;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8pt;
+}
+
+.cv-document--kyoto .cv-kyoto__sidebar {
+  padding: 22mm 14mm 22mm 0;
+  border-left: 1pt solid var(--cv-hairline);
+  margin-left: -1pt;
+  display: flex;
+  flex-direction: column;
+  gap: 16pt;
+}
+
+.cv-document--kyoto .cv-kyoto__sidebar .cv-section__title {
+  font-family: var(--cv-font-body);
+  font-weight: 600;
+  font-size: 7.5pt;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cv-muted);
+  margin-bottom: 7pt;
+}
+
+.cv-document--kyoto .cv-kyoto__contact,
+.cv-document--kyoto .cv-kyoto__personal-details {
+  padding-bottom: 14pt;
+  border-bottom: 1pt solid var(--cv-hairline);
+}
+
+.cv-document--kyoto .cv-kyoto__sidebar .cv-skills__item,
+.cv-document--kyoto .cv-kyoto__sidebar .cv-languages__item {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1pt;
+}
+
+/* ======================================================================= */
+/* DENVER — single column, bar meters, photo. Premium. Bold and modern:   */
+/* a full-width accent header band with a circular photo and oversized     */
+/* name, then one confident column with heavy rule dividers below.        */
+/* ======================================================================= */
+
+.cv-document--denver .cv-denver__header {
+  background:
+    linear-gradient(135deg, var(--cv-scrim), rgba(9, 17, 32, 0.32)),
+    var(--accent);
+  color: #ffffff;
+  padding: 20mm 22mm 16mm;
+  display: flex;
+  align-items: center;
+  gap: 12mm;
+  flex-wrap: wrap;
+}
+
+.cv-document--denver .cv-denver__photo {
+  width: 30mm;
+  height: 30mm;
+  border-radius: 999px;
+  border: 2.5pt solid rgba(255, 255, 255, 0.5);
+}
+
+.cv-document--denver .cv-denver__heading-block {
+  flex: 1;
+  min-width: 60mm;
+}
+
+.cv-document--denver .cv-denver__name {
+  font-family: var(--cv-font-display);
+  font-weight: 800;
+  font-size: 25pt;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.cv-document--denver .cv-denver__headline {
+  margin-top: 4pt;
+  font-family: var(--cv-font-mono);
+  font-size: 9.5pt;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.cv-document--denver .cv-denver__contact {
+  flex-direction: column;
+  gap: 5pt;
+}
+
+.cv-document--denver .cv-denver__contact .cv-contact-list__item {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.cv-document--denver .cv-denver__personal-details {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 4pt 20pt;
+  padding: 10pt 22mm;
+  border-bottom: 1.5pt solid var(--cv-hairline);
+}
+
+.cv-document--denver .cv-denver__personal-details .cv-personal-details__row {
+  flex-direction: row;
+  gap: 4pt;
+  align-items: baseline;
+}
+
+.cv-document--denver .cv-denver__personal-details dt {
+  color: var(--cv-muted);
+}
+
+.cv-document--denver .cv-denver__main {
+  padding: 18pt 22mm 22mm;
+}
+
+.cv-document--denver .cv-denver__section .cv-section__title {
+  font-family: var(--cv-font-display);
+  font-weight: 800;
+  font-size: 11pt;
+  letter-spacing: 0.02em;
+  color: var(--cv-ink);
+  margin-bottom: 10pt;
+  padding-left: 10pt;
+  border-left: 4pt solid var(--accent);
+}

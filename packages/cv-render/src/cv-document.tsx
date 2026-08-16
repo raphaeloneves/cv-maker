@@ -1,18 +1,31 @@
+// Explicit React import — required even under the "react-jsx" automatic
+// transform: workspace-symlinked packages consumed by tsx/esbuild across
+// package boundaries do not reliably pick up this package's own tsconfig
+// jsx setting, and can fall back to the classic transform (`React.createElement`),
+// which throws `ReferenceError: React is not defined` without this import.
+import React from "react";
 import type { CvRenderData } from "./types.js";
+import { DenverTemplate } from "./templates/denver.js";
+import { HelsinkiTemplate } from "./templates/helsinki.js";
+import { KyotoTemplate } from "./templates/kyoto.js";
+import { LisbonTemplate } from "./templates/lisbon.js";
 
 /**
- * PLACEHOLDER — replaced by the real layout engine + 4 template components
- * (Helsinki, Lisbon, Kyoto, Denver) per features/17-template-theme-selection.md.
- *
- * This is the single render entry point used by BOTH the browser-side live
- * preview and the server-side PDF export (react-dom/server + Puppeteer) —
- * keep it that way; do not let the two call sites diverge.
+ * The single render entry point used by BOTH the browser-side live preview
+ * (apps/web) and the server-side PDF export (apps/api, via react-dom/server +
+ * Puppeteer) — keep it that way; do not let the two call sites diverge. Pure,
+ * server-renderable React: no `window`/`document`/browser-only APIs anywhere
+ * in the component tree this dispatches into.
  */
 export function CvDocument({ data }: { data: CvRenderData }) {
-  return (
-    <div data-template={data.templateId} style={{ ["--accent" as string]: data.accentColor }}>
-      <p>cv-render placeholder — template &quot;{data.templateId}&quot; not yet implemented.</p>
-      {data.watermarked && <div data-watermark="true">CV Maker</div>}
-    </div>
-  );
+  switch (data.templateId) {
+    case "helsinki":
+      return <HelsinkiTemplate data={data} />;
+    case "lisbon":
+      return <LisbonTemplate data={data} />;
+    case "kyoto":
+      return <KyotoTemplate data={data} />;
+    case "denver":
+      return <DenverTemplate data={data} />;
+  }
 }
