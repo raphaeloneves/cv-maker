@@ -3,8 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.13"
   },
+  "packageManager": "pnpm@11.18.0",
   "scripts": {
     "dev": "pnpm --parallel --filter ./apps/* run dev",
     "build": "pnpm --recursive --filter ./packages/* run build && pnpm --recursive --filter ./apps/* run build",
