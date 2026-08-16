@@ -1,0 +1,22 @@
+---
+import "@/styles/global.css";
+
+interface Props {
+  title: string;
+  /** "dark" = brand's dark navy chrome (marketing/nav/footer); "light"
+   * (default) = the Ice builder surface used for all form-heavy screens. */
+  surface?: "light" | "dark";
+}
+const { title, surface = "light" } = Astro.props;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} — CV Maker</title>
+  </head>
+  <body data-surface={surface}>
+    <slot />
+  </body>
+</html>

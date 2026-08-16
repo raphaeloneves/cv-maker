@@ -1,0 +1,78 @@
+/* CV Maker design tokens — literal reuse of the Flathire brand kit
+ * (ref/flathire-brand-pack/01-brand-document/flathire-brand-positioning.md),
+ * because CV Maker ships as "CV Maker, by Flathire". Do not introduce new
+ * brand colors/fonts without updating that source document first.
+ *
+ * Usage rule carried over from the brand doc: navy carries authority, orange
+ * carries energy/action. Orange is reserved for things the user should notice
+ * or act on (CTAs, key numbers, active states) — never a body-text color or a
+ * large background fill.
+ *
+ * Because the builder is a long-form-heavy product (not a marketing page),
+ * the DEFAULT surface is the brand's own "light section" treatment (Ice
+ * background, Navy Deep headlines, #4A5568 body) — dark Navy Deep is reserved
+ * for the marketing/landing chrome and the nav header, exactly like the
+ * brand's own site alternates light/dark sections. */
+
+:root {
+  /* --- Brand palette (verbatim tokens) --- */
+  --navy-deep: #0a1628;
+  --navy-mid: #1b3a6b;
+  --navy-light: #243f72;
+  --orange: #e8640c;
+  --orange-warm: #f4a261;
+  --ice: #e8edf5;
+  --white: #ffffff;
+  --muted: #8a9bbf;
+  --border-on-dark: rgba(232, 237, 245, 0.12);
+  --body-on-light: #4a5568;
+
+  /* --- Semantic surface tokens (light/default builder chrome) --- */
+  --surface-page: var(--ice);
+  --surface-card: var(--white);
+  --surface-sunken: #dfe6f2;
+  --text-heading: var(--navy-deep);
+  --text-body: var(--body-on-light);
+  --text-muted: #6b7a99;
+  --text-on-dark: var(--ice);
+  --border-on-light: rgba(10, 22, 40, 0.1);
+  --accent: var(--orange);
+  --accent-hover: #cf580a;
+  --accent-warm: var(--orange-warm);
+  --focus-ring: var(--orange);
+  --danger: #c23b3b;
+  --success: #1f8a5f;
+
+  /* --- Type --- */
+  --font-display: "Syne", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --tracking-tight: -0.02em;
+  --tracking-tighter: -0.03em;
+  --tracking-wide: 0.08em;
+  --tracking-widest: 0.14em;
+
+  /* --- Shape --- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  /* --- Motion (sparse, purposeful — see brand doc "Motion" section) --- */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 150ms;
+  --duration-standard: 250ms;
+  --duration-float: 4.2s;
+}
+
+/* Dark surfaces — marketing hero, nav header, footer, template-preview
+ * scrim — opt in explicitly via [data-surface="dark"], never the default. */
+[data-surface="dark"] {
+  --surface-page: var(--navy-deep);
+  --surface-card: var(--navy-mid);
+  --surface-sunken: var(--navy-light);
+  --text-heading: var(--white);
+  --text-body: var(--ice);
+  --text-muted: var(--muted);
+  --border-on-light: var(--border-on-dark);
+}

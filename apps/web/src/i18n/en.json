@@ -1,0 +1,16 @@
+{
+  "nav.home": "Home",
+  "nav.dashboard": "My CVs",
+  "nav.login": "Log in",
+  "nav.signup": "Sign up",
+  "builder.step.personalInfo": "Personal",
+  "builder.step.content": "Content",
+  "builder.step.template": "Template",
+  "builder.step.checkout": "Checkout",
+  "builder.next": "Next step",
+  "builder.back": "Previous step",
+  "save.saving": "Saving…",
+  "save.saved": "Saved",
+  "brand.name": "CV Maker",
+  "brand.by": "by Flathire"
+}

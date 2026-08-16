@@ -1,0 +1,400 @@
+// CV Maker — database schema.
+// All changes to this file MUST ship as a Prisma migration
+// (`pnpm --filter @cv-maker/api prisma migrate dev` locally,
+// `prisma migrate deploy` on container startup) — never applied by hand
+// against a running database. See /Users/rneves/.claude/plans/calm-enchanting-wilkes.md.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Accounts & billing
+// ---------------------------------------------------------------------------
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model User {
+  id           String   @id @default(uuid())
+  // Intentionally decoupled from PersonalInfo.email — see features/19.
+  email        String   @unique
+  passwordHash String
+  locale       BuilderLocale @default(PT_PT)
+  // ADMIN bypasses all paywall/entitlement checks (see
+  // @cv-maker/contracts billing.ts:hasActiveEntitlement) — internal
+  // QA/demo accounts only, seeded via prisma/seed.ts, never self-serve.
+  role         UserRole @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  cvs               Cv[]
+  subscription      Subscription?
+  termsAcceptances  TermsAcceptance[]
+  refreshTokens     RefreshToken[]
+
+  @@map("users")
+}
+
+// Audit trail for terms acceptance, recorded regardless of the UI consent
+// pattern chosen — see features/16's flag that implicit consent needs
+// LGPD/legal review before reuse as-is.
+model TermsAcceptance {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  version    String
+  acceptedAt DateTime @default(now())
+
+  @@map("terms_acceptances")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+
+  @@map("refresh_tokens")
+}
+
+enum SubscriptionStatus {
+  NONE
+  ACTIVE
+  CANCELED
+  PAST_DUE
+}
+
+model Subscription {
+  id                   String             @id @default(uuid())
+  userId               String             @unique
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status               SubscriptionStatus @default(NONE)
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@map("subscriptions")
+}
+
+// ---------------------------------------------------------------------------
+// CV shell
+// ---------------------------------------------------------------------------
+
+enum BuilderLocale {
+  PT_PT
+  EN
+}
+
+enum CvContentLanguage {
+  PT_PT
+  EN
+}
+
+enum TemplateId {
+  HELSINKI
+  LISBON
+  KYOTO
+  DENVER
+}
+
+model Cv {
+  id              String            @id @default(uuid())
+  userId          String
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String            @default("Untitled CV")
+  contentLanguage CvContentLanguage @default(PT_PT)
+  templateId      TemplateId        @default(HELSINKI)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  personalInfo         PersonalInfo?
+  sections             Section[]
+  templatePreferences  CvTemplatePreference[]
+
+  @@map("cvs")
+}
+
+model CvTemplatePreference {
+  id         String     @id @default(uuid())
+  cvId       String
+  cv         Cv         @relation(fields: [cvId], references: [id], onDelete: Cascade)
+  templateId TemplateId
+  color      String
+
+  @@unique([cvId, templateId])
+  @@map("cv_template_preferences")
+}
+
+// ---------------------------------------------------------------------------
+// Personal info (features/01, 02)
+// ---------------------------------------------------------------------------
+
+enum Gender {
+  FEMALE
+  MALE
+  NON_BINARY
+  SELF_DESCRIBED
+  PREFER_NOT_TO_SAY
+}
+
+model PersonalInfo {
+  id                 String   @id @default(uuid())
+  cvId               String   @unique
+  cv                 Cv       @relation(fields: [cvId], references: [id], onDelete: Cascade)
+
+  firstName          String
+  lastName           String
+  email              String
+  address            String
+  phone              String?
+  postalCode         String?
+  city               String?
+
+  dobDay             Int?
+  dobMonth           Int?
+  dobYear            Int?
+  placeOfBirth       String?
+  drivingLicence     String?
+  gender             Gender?
+  genderSelfDescribed String?
+  nationality        String?
+  maritalStatus      String?
+  linkedin           String?
+  website            String?
+
+  photoUrl           String?
+  photoZoom          Float?
+  photoRotationDeg   Int?
+
+  updatedAt          DateTime @updatedAt
+
+  @@map("personal_info")
+}
+
+// ---------------------------------------------------------------------------
+// Sections (features/14, 15) — one generic Section row per section instance,
+// plus one child entry table per structured type. Freeform sections
+// (profile_summary/achievements/publications/custom) store their body
+// directly on the Section row.
+// ---------------------------------------------------------------------------
+
+enum SectionType {
+  PROFILE_SUMMARY
+  WORK_EXPERIENCE
+  EDUCATION
+  SKILLS
+  HOBBIES
+  REFERENCES
+  LANGUAGES
+  COURSES
+  ACHIEVEMENTS
+  PUBLICATIONS
+  CUSTOM
+}
+
+model Section {
+  id                      String      @id @default(uuid())
+  cvId                    String
+  cv                      Cv          @relation(fields: [cvId], references: [id], onDelete: Cascade)
+  type                    SectionType
+  displayName             String?
+  sortOrder               Float
+  hidden                  Boolean     @default(false)
+  forcePageBreak          Boolean     @default(false)
+  organizeChronologically Boolean     @default(false)
+  deletable               Boolean     @default(true)
+  // References' showAvailableUponRequest and any other section-type-specific
+  // toggle that doesn't warrant its own column (features/10, 15).
+  settings                Json        @default("{}")
+  // Body for profile_summary / achievements / publications / custom only.
+  freeformDescription     String?
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
+
+  workExperienceEntries WorkExperienceEntry[]
+  educationEntries      EducationEntry[]
+  courseEntries         CourseEntry[]
+  skillEntries          SkillEntry[]
+  languageEntries       LanguageEntry[]
+  hobbyEntries          HobbyEntry[]
+  referenceEntries      ReferenceEntry[]
+
+  @@index([cvId])
+  @@map("sections")
+}
+
+// Idempotency ledger for section creation — a (cvId, clientRequestId) hit
+// returns the original section instead of creating a duplicate. Direct fix
+// for the reference product's confirmed duplicate-section-on-rapid-input bug
+// (features/14, 15).
+model SectionCreationRequest {
+  id              String   @id @default(uuid())
+  cvId            String
+  clientRequestId String
+  sectionId       String
+  createdAt       DateTime @default(now())
+
+  @@unique([cvId, clientRequestId])
+  @@map("section_creation_requests")
+}
+
+enum DateGranularity {
+  FULL
+  YEAR_ONLY
+  HIDDEN
+}
+
+// Shared shape (documented once, applied via @@map per model) for the three
+// "repeatable timeline entry" sections — features/05, 06, 11.
+
+model WorkExperienceEntry {
+  id              String          @id @default(uuid())
+  sectionId       String
+  section         Section         @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  title           String
+  employer        String
+  city            String?
+  startGranularity DateGranularity
+  startMonth      Int?
+  startYear       Int
+  endIsPresent    Boolean
+  endGranularity  DateGranularity?
+  endMonth        Int?
+  endYear         Int?
+  description     String?
+  sortOrder       Float
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([sectionId])
+  @@map("work_experience_entries")
+}
+
+model EducationEntry {
+  id              String          @id @default(uuid())
+  sectionId       String
+  section         Section         @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  degree          String
+  school          String
+  city            String?
+  startGranularity DateGranularity
+  startMonth      Int?
+  startYear       Int
+  endIsPresent    Boolean
+  endGranularity  DateGranularity?
+  endMonth        Int?
+  endYear         Int?
+  description     String?
+  sortOrder       Float
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([sectionId])
+  @@map("education_entries")
+}
+
+model CourseEntry {
+  id              String          @id @default(uuid())
+  sectionId       String
+  section         Section         @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  courseName      String
+  institution     String
+  credentialUrl   String?
+  city            String?
+  startGranularity DateGranularity
+  startMonth      Int?
+  startYear       Int
+  endIsPresent    Boolean
+  endGranularity  DateGranularity?
+  endMonth        Int?
+  endYear         Int?
+  description     String?
+  sortOrder       Float
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([sectionId])
+  @@map("course_entries")
+}
+
+model SkillEntry {
+  id        String   @id @default(uuid())
+  sectionId String
+  section   Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  name      String
+  // Evenly-spaced 1-5 rank — fixes the reference product's uneven scale
+  // (features/07).
+  level     Int
+  sortOrder Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sectionId])
+  @@map("skill_entries")
+}
+
+enum LanguageScale {
+  DESCRIPTIVE
+  CEFR
+}
+
+model LanguageEntry {
+  id           String        @id @default(uuid())
+  sectionId    String
+  section      Section       @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  languageName String
+  scale        LanguageScale
+  // Stores the enum value string from the matching scale ('native' | ... |
+  // 'A1' | ... ) — the scale discriminant lives in `scale`, never inferred
+  // from this value (features/08).
+  level        String
+  sortOrder    Float
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([sectionId])
+  @@map("language_entries")
+}
+
+model HobbyEntry {
+  id        String   @id @default(uuid())
+  sectionId String
+  section   Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  name      String
+  sortOrder Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sectionId])
+  @@map("hobby_entries")
+}
+
+model ReferenceEntry {
+  id            String   @id @default(uuid())
+  sectionId     String
+  section       Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  companyName   String
+  contactPerson String
+  phone         String?
+  email         String?
+  sortOrder     Float
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([sectionId])
+  @@map("reference_entries")
+}
