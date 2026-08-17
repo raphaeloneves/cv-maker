@@ -55,7 +55,6 @@ export async function registerPersonalInfoRoutes(app: FastifyInstance) {
         firstName: "",
         lastName: "",
         email: "",
-        address: "",
         photoUrl,
       });
     }

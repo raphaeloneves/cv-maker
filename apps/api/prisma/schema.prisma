@@ -159,7 +159,7 @@ model PersonalInfo {
   firstName          String
   lastName           String
   email              String
-  address            String
+  address            String?
   phone              String?
   postalCode         String?
   city               String?

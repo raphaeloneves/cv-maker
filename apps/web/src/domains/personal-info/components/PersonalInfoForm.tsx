@@ -71,7 +71,6 @@ export function PersonalInfoForm({ cvId }: PersonalInfoFormProps) {
     const errors: Record<string, string> = {};
     if (!form.firstName?.trim()) errors.firstName = t(locale, "personalInfo.error.required");
     if (!form.lastName?.trim()) errors.lastName = t(locale, "personalInfo.error.required");
-    if (!form.address?.trim()) errors.address = t(locale, "personalInfo.error.required");
     if (!form.email?.trim()) errors.email = t(locale, "personalInfo.error.required");
     else if (!isValidEmail(form.email)) errors.email = t(locale, "personalInfo.error.email");
     return errors;
@@ -89,13 +88,13 @@ export function PersonalInfoForm({ cvId }: PersonalInfoFormProps) {
   function handleNext(e: React.MouseEvent) {
     if (Object.keys(requiredErrors).length > 0) {
       e.preventDefault();
-      setTouched({ firstName: true, lastName: true, address: true, email: true });
+      setTouched({ firstName: true, lastName: true, email: true });
     }
   }
 
   if (isLoading || !form) {
     return (
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-4xl">
         <p className="mono-label text-xs text-text-muted">{t(locale, "common.loading")}</p>
       </div>
     );
@@ -104,7 +103,7 @@ export function PersonalInfoForm({ cvId }: PersonalInfoFormProps) {
   const gender = (form.gender ?? "") as Gender | "";
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-4xl">
       <Card className="p-6 sm:p-8">
         {/* Header row — title/subtitle carry the page's own weight; the CV
          * language picker and save indicator are secondary, so they're
@@ -156,25 +155,18 @@ export function PersonalInfoForm({ cvId }: PersonalInfoFormProps) {
               onBlur={() => setTouched((p) => ({ ...p, lastName: true }))}
               error={touched.lastName ? requiredErrors.lastName : null}
             />
-            <Input
-              id="email"
-              label={t(locale, "personalInfo.email")}
-              type="email"
-              required
-              value={form.email ?? ""}
-              onChange={(e) => update({ email: e.target.value })}
-              onBlur={() => setTouched((p) => ({ ...p, email: true }))}
-              error={touched.email ? requiredErrors.email : null}
-            />
-            <Input
-              id="address"
-              label={t(locale, "personalInfo.address")}
-              required
-              value={form.address ?? ""}
-              onChange={(e) => update({ address: e.target.value })}
-              onBlur={() => setTouched((p) => ({ ...p, address: true }))}
-              error={touched.address ? requiredErrors.address : null}
-            />
+            <div className="sm:col-span-2">
+              <Input
+                id="email"
+                label={t(locale, "personalInfo.email")}
+                type="email"
+                required
+                value={form.email ?? ""}
+                onChange={(e) => update({ email: e.target.value })}
+                onBlur={() => setTouched((p) => ({ ...p, email: true }))}
+                error={touched.email ? requiredErrors.email : null}
+              />
+            </div>
           </div>
         </div>
 
@@ -207,6 +199,14 @@ export function PersonalInfoForm({ cvId }: PersonalInfoFormProps) {
                * groups so the section boundaries read clearly at a glance. */}
               <div className="flex flex-col gap-10">
                 <FormSection title={t(locale, "personalInfo.section.contact")}>
+                  <div className="sm:col-span-2">
+                    <Input
+                      id="address"
+                      label={t(locale, "personalInfo.address")}
+                      value={form.address ?? ""}
+                      onChange={(e) => update({ address: e.target.value })}
+                    />
+                  </div>
                   <Input
                     id="phone"
                     label={t(locale, "personalInfo.phone")}

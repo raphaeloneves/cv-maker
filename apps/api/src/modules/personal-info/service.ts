@@ -8,7 +8,8 @@ export async function getPersonalInfo(cvId: string): Promise<PersonalInfo | null
   return row ? personalInfoToDomain(row) : null;
 }
 
-const REQUIRED_FIELDS = ["firstName", "lastName", "email", "address"] as const;
+// Address is deliberately not required here — see contracts/personal-info.ts.
+const REQUIRED_FIELDS = ["firstName", "lastName", "email"] as const;
 
 export async function upsertPersonalInfo(
   cvId: string,
