@@ -30,7 +30,7 @@ export function PersonalInfoStep() {
   if (!cvId) {
     return (
       <div className="mx-auto max-w-md py-16 text-center">
-        <p className="text-sm text-danger">Missing CV id — go back to your dashboard and pick a CV.</p>
+        <p className="text-sm text-danger">{t(locale, "builder.noCvSelected")}</p>
         <a href="/dashboard" className="mt-3 inline-block text-sm font-semibold text-orange">
           {t(locale, "nav.dashboard")} →
         </a>

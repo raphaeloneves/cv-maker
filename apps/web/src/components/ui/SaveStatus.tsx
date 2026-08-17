@@ -9,7 +9,7 @@ export type SaveState = "idle" | "saving" | "saved" | "error";
 export function SaveStatus({ state }: { state: SaveState }) {
   if (state === "idle") return null;
   const label =
-    state === "saving" ? "Saving…" : state === "saved" ? "Saved" : "Couldn't save — retrying…";
+    state === "saving" ? "Saving…" : state === "saved" ? "Saved" : "Couldn't save. Retrying…";
   return (
     <span
       className={clsx(
