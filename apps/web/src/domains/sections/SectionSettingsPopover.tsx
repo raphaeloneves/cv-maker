@@ -76,7 +76,7 @@ export function SectionSettingsPopover({
           </label>
           <input
             id={`rename-${section.id}`}
-            className="w-full rounded-md border border-[var(--border-on-light)] bg-surface-card px-3 py-2 text-sm text-body focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)]"
+            className="w-full rounded-md border border-[var(--border-on-light)] bg-surface-card px-3 py-2 text-sm text-body focus:outline-none focus:border-orange focus:ring-4 focus:ring-orange/15"
             value={rename.value}
             onChange={(e) => rename.setValue(e.target.value)}
             placeholder={t(locale, "section.renamePlaceholder")}

@@ -33,5 +33,20 @@ export function FieldShell({ label, htmlFor, required, error, hint, children }: 
   );
 }
 
+// Deliberately no focus styling here — Input/Select append one of
+// focusRingClasses/focusRingErrorClasses below, never both, so an invalid
+// field that's focused stays visibly red instead of a same-specificity
+// `focus:border-orange` clobbering `border-danger`.
 export const inputBaseClasses =
-  "w-full rounded-md border border-[var(--border-on-light)] bg-surface-card px-3 py-2 text-sm text-body placeholder:text-text-muted focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)] disabled:opacity-50";
+  "w-full rounded-md border border-[var(--border-on-light)] bg-surface-card px-3 py-2 text-sm text-body placeholder:text-text-muted transition-shadow duration-fast ease-standard focus:outline-none disabled:opacity-50";
+
+// A thin border-color change + a soft low-opacity ring reads as "you're
+// typing here," calm and on-brand — a hard 2px solid-orange outline (the
+// previous global `:focus-visible` treatment) is visually indistinguishable
+// from an error state on every field, focused or not, which is confusing on
+// a form this size.
+export const focusRingClasses = "focus:border-orange focus:ring-4 focus:ring-orange/15";
+// Error stays visibly red through focus too — a field you're actively
+// fixing should keep saying so, not switch to the calm "all good" color
+// the moment you click into it.
+export const focusRingErrorClasses = "focus:border-danger focus:ring-4 focus:ring-danger/15";

@@ -47,7 +47,7 @@ export function AddSectionControl({ existingSections, contentLanguage, onAdd }: 
       <PlusIcon className="shrink-0 text-text-muted" />
       <select
         aria-label={t(locale, "section.addExtra")}
-        className="min-w-0 flex-1 rounded-md border border-[var(--border-on-light)] bg-surface-card px-3 py-2 text-sm text-body focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)]"
+        className="min-w-0 flex-1 rounded-md border border-[var(--border-on-light)] bg-surface-card px-3 py-2 text-sm text-body focus:outline-none focus:border-orange focus:ring-4 focus:ring-orange/15"
         value={selected}
         disabled={pending}
         onChange={(e) => setSelected(e.target.value as SectionType)}

@@ -1,5 +1,5 @@
 import type { ReactNode, SelectHTMLAttributes } from "react";
-import { FieldShell, inputBaseClasses } from "./FieldShell.js";
+import { FieldShell, inputBaseClasses, focusRingClasses, focusRingErrorClasses } from "./FieldShell.js";
 import { clsx } from "./clsx.js";
 
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
@@ -14,7 +14,12 @@ export function Select({ label, error, hint, id, className, children, ...rest }:
     <FieldShell label={label} htmlFor={id!} required={rest.required} error={error} hint={hint}>
       <select
         id={id}
-        className={clsx(inputBaseClasses, "appearance-none", error && "border-danger", className)}
+        className={clsx(
+          inputBaseClasses,
+          "appearance-none",
+          error ? clsx("border-danger", focusRingErrorClasses) : focusRingClasses,
+          className,
+        )}
         aria-invalid={!!error || undefined}
         {...rest}
       >

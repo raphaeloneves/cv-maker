@@ -128,7 +128,7 @@ export function RichTextEditor({ value, onChange, ariaLabel, placeholder }: Rich
   if (!editor) return null;
 
   return (
-    <div className="rich-text-editor overflow-hidden rounded-md border border-[var(--border-on-light)] bg-surface-card focus-within:outline-2 focus-within:outline-[var(--focus-ring)]">
+    <div className="rich-text-editor overflow-hidden rounded-md border border-[var(--border-on-light)] bg-surface-card transition-shadow duration-fast ease-standard focus-within:border-orange focus-within:ring-4 focus-within:ring-orange/15">
       {/* Scoped list styling — deliberately not touching the shared
        * src/styles/global.css, since ProseMirror generates <ul>/<ol> tags
        * this component can't attach Tailwind classes to directly. */}

@@ -108,7 +108,7 @@ export function SignupForm() {
           type="checkbox"
           checked={termsAccepted}
           onChange={(e) => setTermsAccepted(e.target.checked)}
-          className="mt-0.5 h-4 w-4 shrink-0 rounded border-[var(--border-on-light)] text-orange focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)]"
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-[var(--border-on-light)] text-orange focus:outline-none focus-visible:ring-2 focus-visible:ring-orange/40"
         />
         <span>
           {t(locale, "auth.signup.terms.prefix")}{" "}

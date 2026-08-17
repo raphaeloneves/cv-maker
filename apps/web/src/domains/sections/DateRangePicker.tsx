@@ -1,7 +1,7 @@
 import { useId, useMemo } from "react";
 import { EARLIEST_SELECTABLE_YEAR, isDateRangeSuspicious } from "@cv-maker/contracts";
 import type { DateEnd, DateGranularity, DatePoint, DateRange } from "@cv-maker/contracts";
-import { Toggle } from "@/components/ui";
+import { Toggle, clsx } from "@/components/ui";
 import { useBuilderLocale } from "@/lib/use-builder-locale.js";
 import { t } from "@/i18n/index.js";
 import { WarningIcon } from "./icons.js";
@@ -20,7 +20,7 @@ function monthLabels(intlLocale: string): string[] {
 }
 
 const selectClasses =
-  "w-full rounded-md border border-[var(--border-on-light)] bg-surface-card px-2.5 py-2 text-sm text-body focus-visible:outline-2 focus-visible:outline-[var(--focus-ring)]";
+  "w-full rounded-md border border-[var(--border-on-light)] bg-surface-card px-2.5 py-2 text-sm text-body focus:outline-none focus:border-orange focus:ring-4 focus:ring-orange/15";
 
 interface GranularityRowProps {
   granularity: DateGranularity;
@@ -34,7 +34,13 @@ interface GranularityRowProps {
 
 function GranularityRow({ granularity, month, year, months, years, locale, onChange }: GranularityRowProps) {
   return (
-    <div className="grid grid-cols-3 gap-2">
+    // Granularity always gets a wider column than month/year — its labels
+    // ("Year only" / "Apenas o ano") run noticeably longer than a month name
+    // or a 4-digit year. When month is hidden (granularity isn't "full")
+    // the grid drops to 2 columns instead of leaving an empty 1/3-width gap
+    // where month used to be, which was also squeezing granularity into a
+    // column too narrow for its own longer options and clipping the text.
+    <div className={clsx("grid gap-2", granularity === "full" ? "grid-cols-[1.3fr_1fr_1fr]" : "grid-cols-[1.3fr_1fr]")}>
       <select
         aria-label={t(locale, "date.granularity")}
         className={selectClasses}
