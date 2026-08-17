@@ -5,6 +5,7 @@ import { t } from "@/i18n";
 import { getStoredLocale } from "@/lib/locale";
 import { AppQueryProvider } from "@/lib/query-client";
 import { withCvId } from "@/lib/use-cv-id";
+import { useConfirmDialog } from "@/lib/use-confirm-dialog";
 import { RequireAuth } from "@/domains/auth/components/RequireAuth";
 import { listCvs, createCv, deleteCv } from "@/domains/cvs/api";
 
@@ -21,6 +22,7 @@ function formatUpdated(iso: string, locale: string): string {
 function DashboardBody() {
   const locale = getStoredLocale();
   const queryClient = useQueryClient();
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
 
   const cvsQuery = useQuery({ queryKey: ["cvs"], queryFn: listCvs });
 
@@ -39,7 +41,8 @@ function DashboardBody() {
   });
 
   return (
-    <div className="mx-auto max-w-5xl px-5 py-10 sm:px-8">
+    <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
+      {confirmDialog}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="font-display text-3xl font-extrabold tracking-tight text-heading">
@@ -101,8 +104,8 @@ function DashboardBody() {
                       "text-xs font-medium text-text-muted transition-colors duration-fast hover:text-danger",
                       deleteMutation.isPending && deleteMutation.variables === cv.id && "opacity-50",
                     )}
-                    onClick={() => {
-                      if (window.confirm(t(locale, "dashboard.card.deleteConfirm"))) {
+                    onClick={async () => {
+                      if (await confirm({ message: t(locale, "dashboard.card.deleteConfirm"), destructive: true })) {
                         deleteMutation.mutate(cv.id);
                       }
                     }}

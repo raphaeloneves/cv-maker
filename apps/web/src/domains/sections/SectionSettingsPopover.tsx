@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { Section, UpdateSection } from "@cv-maker/contracts";
-import { Toggle } from "@/components/ui";
+import { Toggle, SaveStatus } from "@/components/ui";
 import { useBuilderLocale } from "@/lib/use-builder-locale.js";
 import { t } from "@/i18n/index.js";
 import { useDebouncedAutosave } from "@/lib/use-debounced-autosave.js";
-import { SaveStatus } from "@/components/ui";
+import { useConfirmDialog } from "@/lib/use-confirm-dialog";
 
 interface SectionSettingsPopoverProps {
   section: Section;
@@ -28,6 +28,7 @@ export function SectionSettingsPopover({
   const locale = useBuilderLocale();
   const ref = useRef<HTMLDivElement>(null);
   const [removing, setRemoving] = useState(false);
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
@@ -51,7 +52,7 @@ export function SectionSettingsPopover({
 
   async function handleRemove() {
     if (!onRemove) return;
-    if (!confirm(t(locale, "section.removeConfirm"))) return;
+    if (!(await confirm({ message: t(locale, "section.removeConfirm"), destructive: true }))) return;
     setRemoving(true);
     try {
       await onRemove();
@@ -67,6 +68,7 @@ export function SectionSettingsPopover({
       aria-label={t(locale, "section.settings")}
       className="absolute right-0 top-full z-20 mt-1.5 w-80 rounded-lg border border-[var(--border-on-light)] bg-surface-card p-4 shadow-xl"
     >
+      {confirmDialog}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
           <label htmlFor={`rename-${section.id}`} className="text-sm font-medium text-heading">

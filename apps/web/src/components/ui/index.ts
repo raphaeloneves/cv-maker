@@ -5,6 +5,7 @@ export { Input } from "./Input.js";
 export { Select } from "./Select.js";
 export { Toggle } from "./Toggle.js";
 export { Modal } from "./Modal.js";
+export { ConfirmDialog } from "./ConfirmDialog.js";
 export { SaveStatus } from "./SaveStatus.js";
 export type { SaveState } from "./SaveStatus.js";
 export { clsx } from "./clsx.js";

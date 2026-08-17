@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { SaveStatus, clsx, type SaveState } from "@/components/ui";
+import { useConfirmDialog } from "@/lib/use-confirm-dialog";
 import { DragHandleIcon, PencilIcon, TrashIcon } from "./icons.js";
 
 interface EntryFormCardProps<TEntry extends { id: string }, TDraft, TUpsert> {
@@ -62,6 +63,7 @@ export function EntryFormCard<TEntry extends { id: string }, TDraft, TUpsert>({
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const savedIdRef = useRef<string | null>(entry?.id ?? null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
@@ -101,7 +103,7 @@ export function EntryFormCard<TEntry extends { id: string }, TDraft, TUpsert>({
   }
 
   async function handleDelete() {
-    if (!confirm(deleteConfirmMessage)) return;
+    if (!(await confirm({ message: deleteConfirmMessage, destructive: true }))) return;
     if (savedIdRef.current) {
       await remove(savedIdRef.current);
     }
@@ -117,6 +119,7 @@ export function EntryFormCard<TEntry extends { id: string }, TDraft, TUpsert>({
         isDragging && "opacity-70 shadow-md",
       )}
     >
+      {confirmDialog}
       <div className="flex items-start gap-2">
         {draggable && (
           <button
