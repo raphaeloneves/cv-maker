@@ -40,7 +40,10 @@ export const TEMPLATE_DEFINITIONS: TemplateDefinition[] = [
     id: "lisbon",
     name: "Lisbon",
     layout: { columns: 1, sidebar: "none", meterStyle: "dot", photoSupported: true },
-    colorPalette: ["#0A1628", "#E8640C", "#4A5568", "#1B3A6B"],
+    // First entry is the default accent — deliberately led with orange (not
+    // navy) so Lisbon's default tint reads distinctly from Helsinki's at a
+    // glance in the template gallery, even though both share this swatch set.
+    colorPalette: ["#E8640C", "#0A1628", "#4A5568", "#1B3A6B"],
     premium: false,
   },
   {
@@ -55,6 +58,20 @@ export const TEMPLATE_DEFINITIONS: TemplateDefinition[] = [
     name: "Denver",
     layout: { columns: 1, sidebar: "none", meterStyle: "bar", photoSupported: true },
     colorPalette: ["#1B3A6B", "#E8640C", "#0A1628", "#F4A261"],
+    premium: true,
+  },
+  {
+    id: "marrakech",
+    name: "Marrakech",
+    layout: { columns: 2, sidebar: "right", meterStyle: "bar", photoSupported: true },
+    colorPalette: ["#B5501F", "#7A2E1D", "#E8640C", "#2B1B14"],
+    premium: true,
+  },
+  {
+    id: "geneva",
+    name: "Geneva",
+    layout: { columns: 2, sidebar: "left", meterStyle: "dot", photoSupported: false },
+    colorPalette: ["#12403F", "#1B3A6B", "#2E6E6A", "#0A1628"],
     premium: true,
   },
 ];

@@ -778,3 +778,190 @@
   padding-left: 10pt;
   border-left: 4pt solid var(--accent);
 }
+
+/* ======================================================================= */
+/* MARRAKECH — 2-column, right sidebar, bar meters, photo. Premium. Warm   */
+/* and geometric: a full-width gradient header band with an overlapping    */
+/* circular photo, a wide main column set with tile-chip section titles,   */
+/* beside a warm-tinted, rounded sidebar card carrying at-a-glance facts.  */
+/* ======================================================================= */
+
+.cv-document--marrakech .cv-marrakech__header {
+  position: relative;
+  background:
+    linear-gradient(135deg, var(--cv-scrim), rgba(9, 17, 32, 0.28)),
+    var(--accent);
+  color: #ffffff;
+  padding: 18mm 22mm 16mm;
+  display: flex;
+  align-items: center;
+  gap: 10mm;
+}
+
+.cv-document--marrakech .cv-marrakech__photo {
+  width: 32mm;
+  height: 32mm;
+  border-radius: 22%;
+  border: 3pt solid rgba(255, 255, 255, 0.55);
+  flex: none;
+}
+
+.cv-document--marrakech .cv-marrakech__heading-block {
+  flex: 1;
+}
+
+.cv-document--marrakech .cv-marrakech__name {
+  font-family: var(--cv-font-display);
+  font-weight: 800;
+  font-size: 24pt;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+}
+
+.cv-document--marrakech .cv-marrakech__headline {
+  margin-top: 4pt;
+  font-family: var(--cv-font-mono);
+  font-size: 9pt;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.cv-document--marrakech .cv-marrakech__body {
+  display: grid;
+  grid-template-columns: 1fr 58mm;
+}
+
+.cv-document--marrakech .cv-marrakech__main {
+  padding: 18pt 10mm 22mm 22mm;
+}
+
+.cv-document--marrakech .cv-marrakech__main .cv-section__title {
+  display: inline-block;
+  font-family: var(--cv-font-display);
+  font-weight: 700;
+  font-size: 8.5pt;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: var(--accent);
+  border-radius: 999px;
+  padding: 4pt 12pt;
+  margin-bottom: 10pt;
+}
+
+.cv-document--marrakech .cv-marrakech__sidebar {
+  margin: 12mm 12mm 12mm 0;
+  padding: 14mm 10mm;
+  border-radius: 8pt;
+  background: color-mix(in srgb, var(--accent) 8%, #fff9f4);
+  border: 1pt solid color-mix(in srgb, var(--accent) 22%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 16pt;
+}
+
+.cv-document--marrakech .cv-marrakech__sidebar .cv-section__title {
+  font-family: var(--cv-font-display);
+  font-weight: 700;
+  font-size: 8pt;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8pt;
+}
+
+.cv-document--marrakech .cv-marrakech__contact,
+.cv-document--marrakech .cv-marrakech__personal-details {
+  padding-bottom: 12pt;
+  border-bottom: 1pt solid color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.cv-document--marrakech .cv-marrakech__sidebar .cv-hobbies__chip {
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  background: #ffffff;
+}
+
+/* ======================================================================= */
+/* GENEVA — 2-column, left sidebar, dot meters, no photo. Premium. Quiet   */
+/* Swiss-grid minimalism: a slender rule-divided column of plain-text      */
+/* facts and dot meters beside a calm, spacious main column.               */
+/* ======================================================================= */
+
+.cv-document--geneva .cv-geneva__page {
+  display: grid;
+  grid-template-columns: 56mm 1fr;
+  min-height: 297mm;
+}
+
+.cv-document--geneva .cv-geneva__sidebar {
+  padding: 24mm 12mm 24mm 16mm;
+  border-right: 1pt solid var(--cv-hairline);
+  display: flex;
+  flex-direction: column;
+  gap: 16pt;
+}
+
+.cv-document--geneva .cv-geneva__contact,
+.cv-document--geneva .cv-geneva__personal-details {
+  padding-bottom: 14pt;
+  border-bottom: 1pt solid var(--cv-hairline);
+}
+
+.cv-document--geneva .cv-geneva__contact .cv-contact-list__item {
+  font-size: 7.5pt;
+}
+
+.cv-document--geneva .cv-geneva__sidebar .cv-section__title {
+  font-family: var(--cv-font-mono);
+  font-weight: 500;
+  font-size: 7pt;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cv-muted);
+  margin-bottom: 8pt;
+}
+
+.cv-document--geneva .cv-geneva__sidebar .cv-skills__item,
+.cv-document--geneva .cv-geneva__sidebar .cv-languages__item {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3pt;
+}
+
+.cv-document--geneva .cv-geneva__main {
+  padding: 24mm 22mm 22mm 16mm;
+}
+
+.cv-document--geneva .cv-geneva__header {
+  margin-bottom: 22pt;
+  padding-bottom: 14pt;
+  border-bottom: 1.5pt solid var(--cv-ink);
+}
+
+.cv-document--geneva .cv-geneva__name {
+  font-family: var(--cv-font-display);
+  font-weight: 600;
+  font-size: 20pt;
+  letter-spacing: 0.01em;
+  color: var(--cv-ink);
+}
+
+.cv-document--geneva .cv-geneva__headline {
+  margin-top: 6pt;
+  font-family: var(--cv-font-mono);
+  font-size: 8.5pt;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.cv-document--geneva .cv-geneva__main .cv-section__title {
+  font-family: var(--cv-font-mono);
+  font-weight: 500;
+  font-size: 8pt;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10pt;
+}

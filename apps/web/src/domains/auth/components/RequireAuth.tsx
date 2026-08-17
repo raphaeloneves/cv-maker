@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { AuthUser } from "@cv-maker/contracts";
 import { refreshSession, setOnAuthExpired } from "@/lib/api-client";
 import { t } from "@/i18n";
-import { getStoredLocale } from "@/lib/locale";
+import { useBuilderLocale } from "@/lib/use-builder-locale";
 
 type Status = "loading" | "authed" | "redirecting";
 
@@ -20,7 +20,7 @@ type Status = "loading" | "authed" | "redirecting";
 export function RequireAuth({ children }: { children: (user: AuthUser) => ReactNode }) {
   const [status, setStatus] = useState<Status>("loading");
   const [user, setUser] = useState<AuthUser | null>(null);
-  const locale = getStoredLocale();
+  const locale = useBuilderLocale();
 
   useEffect(() => {
     let cancelled = false;

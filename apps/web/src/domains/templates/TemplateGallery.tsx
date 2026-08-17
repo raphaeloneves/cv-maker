@@ -1,29 +1,31 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { TEMPLATE_DEFINITIONS, defaultColorFor } from "@cv-maker/contracts";
-import type { Cv, CvRenderData, CvTemplatePreference, TemplateId } from "@cv-maker/contracts";
+import type { Cv, CvTemplatePreference, TemplateId } from "@cv-maker/contracts";
 import { apiGet } from "@/lib/api-client";
 import { useBuilderLocale } from "@/lib/use-builder-locale.js";
 import { t } from "@/i18n/index.js";
 import { templatesApi } from "./api.js";
 import { TemplateCard } from "./TemplateCard.js";
 import { TemplatePreviewModal } from "./TemplatePreviewModal.js";
+import { AiUpsellModal, hasSeenAiUpsell } from "./AiUpsellModal.js";
 
-/** `/builder/template` step: a card grid for the 4 `TEMPLATE_DEFINITIONS`,
- * each opening a live preview modal fed by `GET /cvs/:cvId/render-data`.
- * Remembers each template's last-picked color independently via the
- * template-preference endpoints — switching templates and back restores
- * that template's own color, never one flat CV-level color. */
+/** `/builder/template` step: a card grid for the 6 `TEMPLATE_DEFINITIONS`,
+ * each opening a live preview modal. Both the card thumbnails and the
+ * preview modal are fed the shared, fully-realized demo dataset
+ * (demo-cv-data.ts) rather than the signed-in user's real (often sparse)
+ * draft — every visitor sees a finished-looking example regardless of how
+ * far along their own CV is; template *selection* below still operates on
+ * the real CV. Remembers each template's last-picked color independently
+ * via the template-preference endpoints — switching templates and back
+ * restores that template's own color, never one flat CV-level color. */
 export function TemplateGallery({ cvId }: { cvId: string }) {
   const locale = useBuilderLocale();
   const qc = useQueryClient();
   const [openTemplateId, setOpenTemplateId] = useState<TemplateId | null>(null);
+  const [showAiUpsell, setShowAiUpsell] = useState(false);
 
   const cvQuery = useQuery({ queryKey: ["cv", cvId], queryFn: () => apiGet<Cv>(`/cvs/${cvId}`) });
-  const renderDataQuery = useQuery({
-    queryKey: ["cv-render-data", cvId],
-    queryFn: () => apiGet<CvRenderData>(`/cvs/${cvId}/render-data`),
-  });
   const preferencesQuery = useQuery({
     queryKey: ["template-preferences", cvId],
     queryFn: () => templatesApi.listPreferences(cvId),
@@ -60,7 +62,7 @@ export function TemplateGallery({ cvId }: { cvId: string }) {
         <p className="mt-1 text-sm text-text-muted">{t(locale, "templates.subheading")}</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {TEMPLATE_DEFINITIONS.map((def) => (
           <TemplateCard
             key={def.id}
@@ -77,16 +79,18 @@ export function TemplateGallery({ cvId }: { cvId: string }) {
           open
           onClose={() => setOpenTemplateId(null)}
           definition={openDefinition}
-          baseRenderData={renderDataQuery.data}
           color={colorFor(openDefinition.id)}
           onColorChange={(color) => setColor.mutate({ templateId: openDefinition.id, color })}
           onConfirmSelect={() => {
             void selectTemplate.mutateAsync(openDefinition.id);
             setOpenTemplateId(null);
+            if (!hasSeenAiUpsell()) setShowAiUpsell(true);
           }}
           selected={openDefinition.id === selectedTemplateId}
         />
       )}
+
+      <AiUpsellModal open={showAiUpsell} onClose={() => setShowAiUpsell(false)} />
     </div>
   );
 }

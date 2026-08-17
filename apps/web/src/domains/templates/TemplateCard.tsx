@@ -3,6 +3,7 @@ import { clsx } from "@/components/ui";
 import { useBuilderLocale } from "@/lib/use-builder-locale.js";
 import { t } from "@/i18n/index.js";
 import { CheckIcon } from "@/domains/sections/icons.js";
+import { TemplateThumbnail } from "./TemplateThumbnail.js";
 
 interface TemplateCardProps {
   definition: TemplateDefinition;
@@ -11,12 +12,13 @@ interface TemplateCardProps {
   onOpenPreview: () => void;
 }
 
-/** Template gallery card — a small abstract layout-shape thumbnail (not a
- * literal screenshot, since the real render lives in the preview modal)
- * tinted with the template's currently-remembered accent color. */
+/** Template gallery card — a genuine miniature `<CvDocument>` render (the
+ * shared demo dataset, scaled down via CSS transform) tinted with the
+ * template's currently-remembered accent color, so every card is an
+ * accurate, distinct preview of the real design rather than an abstract
+ * layout-shape approximation. */
 export function TemplateCard({ definition, selected, color, onOpenPreview }: TemplateCardProps) {
   const locale = useBuilderLocale();
-  const twoColumn = definition.layout.columns === 2;
 
   return (
     <button
@@ -32,26 +34,8 @@ export function TemplateCard({ definition, selected, color, onOpenPreview }: Tem
           <CheckIcon width={13} height={13} />
         </span>
       )}
-      <div
-        className="aspect-[3/4] w-full overflow-hidden rounded-md border"
-        style={{ background: `linear-gradient(160deg, ${color}1a, transparent)`, borderColor: `${color}40` }}
-      >
-        <div className="flex h-full gap-2 p-3">
-          {definition.layout.sidebar === "left" && <div className="w-1/3 rounded" style={{ background: `${color}26` }} />}
-          <div className="flex flex-1 flex-col gap-1.5">
-            <div className="h-2.5 w-2/3 rounded-sm" style={{ background: color }} />
-            <div className="mt-1 h-1 w-full rounded-sm bg-navy-deep/10" />
-            <div className="h-1 w-5/6 rounded-sm bg-navy-deep/10" />
-            <div className="h-1 w-4/6 rounded-sm bg-navy-deep/10" />
-            {twoColumn && definition.layout.sidebar === "none" && (
-              <div className="mt-2 flex flex-1 gap-1.5">
-                <div className="flex-1 rounded bg-navy-deep/5" />
-                <div className="flex-1 rounded bg-navy-deep/5" />
-              </div>
-            )}
-          </div>
-          {definition.layout.sidebar === "right" && <div className="w-1/3 rounded" style={{ background: `${color}26` }} />}
-        </div>
+      <div className="overflow-hidden rounded-md border" style={{ borderColor: `${color}40` }}>
+        <TemplateThumbnail templateId={definition.id} color={color} />
       </div>
       <div className="flex items-center justify-between">
         <span className="font-display font-bold text-heading">{definition.name}</span>
