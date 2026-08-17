@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { genderSchema, type CvContentLanguage, type Gender } from "@cv-maker/contracts";
 import { Button, Card, Input, Select, SaveStatus, clsx } from "@/components/ui";
@@ -8,6 +8,7 @@ import { getCv, updateCv } from "@/domains/cvs/api";
 import { withCvId } from "@/lib/use-cv-id";
 import { usePersonalInfoAutosave } from "@/domains/personal-info/hooks/usePersonalInfoAutosave";
 import { PhotoField } from "@/domains/personal-info/components/PhotoField";
+import { CvLanguagePicker } from "@/domains/personal-info/components/CvLanguagePicker";
 
 const CURRENT_YEAR = new Date().getFullYear();
 // Dynamic range (current year back ~120 years) — fixes the reference
@@ -22,6 +23,19 @@ function monthLabel(month: number, locale: string): string {
 
 function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+/** One labeled group of fields inside "Additional information" — grouping
+ * related fields under a small heading, rather than dumping all 10 optional
+ * fields into one undifferentiated grid, is what makes a long optional
+ * section skimmable instead of overwhelming. */
+function FormSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div>
+      <h3 className="mono-label mb-3 text-[11px] text-text-muted">{title}</h3>
+      <div className="grid gap-4 sm:grid-cols-2">{children}</div>
+    </div>
+  );
 }
 
 interface PersonalInfoFormProps {
@@ -92,228 +106,242 @@ export function PersonalInfoForm({ cvId }: PersonalInfoFormProps) {
   return (
     <div className="mx-auto max-w-3xl">
       <Card className="p-6 sm:p-8">
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        {/* Header row — title/subtitle carry the page's own weight; the CV
+         * language picker and save indicator are secondary, so they're
+         * pushed to a lighter-weight corner rather than competing with the
+         * heading. */}
+        <div className="mb-8 flex flex-col gap-4 border-b border-[var(--border-on-light)] pb-6 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="font-display text-2xl font-extrabold tracking-tight text-heading">
               {t(locale, "personalInfo.title")}
             </h1>
             <p className="mt-1 text-sm text-text-muted">{t(locale, "personalInfo.subtitle")}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4 self-start">
             <SaveStatus state={saveState} />
-            <div className="w-40">
-              <Select
-                id="cv-language"
-                label={t(locale, "personalInfo.cvLanguage")}
-                value={cvQuery.data?.contentLanguage ?? "en"}
-                onChange={(e) => cvLanguageMutation.mutate(e.target.value as CvContentLanguage)}
-              >
-                <option value="en">English</option>
-                <option value="pt-PT">Português</option>
-              </Select>
-            </div>
+            <CvLanguagePicker
+              locale={locale}
+              value={cvQuery.data?.contentLanguage ?? "en"}
+              onChange={(value) => cvLanguageMutation.mutate(value)}
+            />
           </div>
         </div>
 
-        <div className="mb-6 flex justify-center sm:justify-start">
+        {/* Core/required block — photo sits beside the name+contact fields
+         * (not floating alone above them) so this reads as one identity
+         * block, matching how a photo sits next to a name on the CV itself. */}
+        <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
           <PhotoField
             cvId={cvId}
             photoUrl={form.photoUrl}
             onSaved={(photoUrl, crop) => saveNow({ photoUrl, photoCrop: crop })}
             onRemoved={() => saveNow({ photoUrl: null, photoCrop: null })}
           />
+          <div className="grid w-full flex-1 gap-4 sm:grid-cols-2">
+            <Input
+              id="firstName"
+              label={t(locale, "personalInfo.firstName")}
+              required
+              value={form.firstName ?? ""}
+              onChange={(e) => update({ firstName: e.target.value })}
+              onBlur={() => setTouched((p) => ({ ...p, firstName: true }))}
+              error={touched.firstName ? requiredErrors.firstName : null}
+            />
+            <Input
+              id="lastName"
+              label={t(locale, "personalInfo.lastName")}
+              required
+              value={form.lastName ?? ""}
+              onChange={(e) => update({ lastName: e.target.value })}
+              onBlur={() => setTouched((p) => ({ ...p, lastName: true }))}
+              error={touched.lastName ? requiredErrors.lastName : null}
+            />
+            <Input
+              id="email"
+              label={t(locale, "personalInfo.email")}
+              type="email"
+              required
+              value={form.email ?? ""}
+              onChange={(e) => update({ email: e.target.value })}
+              onBlur={() => setTouched((p) => ({ ...p, email: true }))}
+              error={touched.email ? requiredErrors.email : null}
+            />
+            <Input
+              id="address"
+              label={t(locale, "personalInfo.address")}
+              required
+              value={form.address ?? ""}
+              onChange={(e) => update({ address: e.target.value })}
+              onBlur={() => setTouched((p) => ({ ...p, address: true }))}
+              error={touched.address ? requiredErrors.address : null}
+            />
+          </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            id="firstName"
-            label={t(locale, "personalInfo.firstName")}
-            required
-            value={form.firstName ?? ""}
-            onChange={(e) => update({ firstName: e.target.value })}
-            onBlur={() => setTouched((p) => ({ ...p, firstName: true }))}
-            error={touched.firstName ? requiredErrors.firstName : null}
-          />
-          <Input
-            id="lastName"
-            label={t(locale, "personalInfo.lastName")}
-            required
-            value={form.lastName ?? ""}
-            onChange={(e) => update({ lastName: e.target.value })}
-            onBlur={() => setTouched((p) => ({ ...p, lastName: true }))}
-            error={touched.lastName ? requiredErrors.lastName : null}
-          />
-          <Input
-            id="email"
-            label={t(locale, "personalInfo.email")}
-            type="email"
-            required
-            value={form.email ?? ""}
-            onChange={(e) => update({ email: e.target.value })}
-            onBlur={() => setTouched((p) => ({ ...p, email: true }))}
-            error={touched.email ? requiredErrors.email : null}
-          />
-          <Input
-            id="address"
-            label={t(locale, "personalInfo.address")}
-            required
-            value={form.address ?? ""}
-            onChange={(e) => update({ address: e.target.value })}
-            onBlur={() => setTouched((p) => ({ ...p, address: true }))}
-            error={touched.address ? requiredErrors.address : null}
-          />
-        </div>
+        <div className="mt-8 border-t border-[var(--border-on-light)] pt-6">
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            aria-expanded={expanded}
+            className="mono-label text-xs text-orange hover:text-accent-hover"
+          >
+            {expanded ? t(locale, "personalInfo.additionalInfo.hide") : t(locale, "personalInfo.additionalInfo.show")}
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setExpanded((v) => !v)}
-          aria-expanded={expanded}
-          className="mono-label mt-6 text-xs text-orange hover:text-accent-hover"
-        >
-          {expanded ? t(locale, "personalInfo.additionalInfo.hide") : t(locale, "personalInfo.additionalInfo.show")}
-        </button>
+          {/* Fields stay mounted at all times (grid-rows 0fr/1fr trick) so
+           * collapsing never loses state — features/01's "preserve entered
+           * data on collapse" requirement, satisfied structurally rather than
+           * by re-hydrating from saved state. */}
+          <div
+            className={clsx(
+              "grid overflow-hidden transition-[grid-template-rows] duration-standard ease-standard",
+              expanded ? "grid-rows-[1fr] mt-6" : "grid-rows-[0fr]",
+            )}
+          >
+            <div className="min-h-0 overflow-hidden">
+              <p className="mb-6 text-xs text-text-muted">{t(locale, "personalInfo.additionalInfo.hint")}</p>
 
-        {/* Fields stay mounted at all times (grid-rows 0fr/1fr trick) so
-         * collapsing never loses state — features/01's "preserve entered
-         * data on collapse" requirement, satisfied structurally rather than
-         * by re-hydrating from saved state. */}
-        <div
-          className={clsx(
-            "grid overflow-hidden transition-[grid-template-rows] duration-standard ease-standard",
-            expanded ? "grid-rows-[1fr] mt-4" : "grid-rows-[0fr]",
-          )}
-        >
-          <div className="min-h-0 overflow-hidden">
-            <p className="mb-4 text-xs text-text-muted">{t(locale, "personalInfo.additionalInfo.hint")}</p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Input
-                id="phone"
-                label={t(locale, "personalInfo.phone")}
-                value={form.phone ?? ""}
-                onChange={(e) => update({ phone: e.target.value })}
-              />
-              <Input
-                id="postalCode"
-                label={t(locale, "personalInfo.postalCode")}
-                value={form.postalCode ?? ""}
-                onChange={(e) => update({ postalCode: e.target.value })}
-              />
-              <Input
-                id="city"
-                label={t(locale, "personalInfo.city")}
-                placeholder={t(locale, "personalInfo.city.placeholder")}
-                value={form.city ?? ""}
-                onChange={(e) => update({ city: e.target.value })}
-              />
-              <Input
-                id="placeOfBirth"
-                label={t(locale, "personalInfo.placeOfBirth")}
-                value={form.placeOfBirth ?? ""}
-                onChange={(e) => update({ placeOfBirth: e.target.value })}
-              />
+              {/* Grouped into three skimmable sections instead of one flat
+               * 10-field grid — each with its own small heading and its own
+               * gap-4 grid, with generous gap-10 breathing room between
+               * groups so the section boundaries read clearly at a glance. */}
+              <div className="flex flex-col gap-10">
+                <FormSection title={t(locale, "personalInfo.section.contact")}>
+                  <Input
+                    id="phone"
+                    label={t(locale, "personalInfo.phone")}
+                    value={form.phone ?? ""}
+                    onChange={(e) => update({ phone: e.target.value })}
+                  />
+                  <Input
+                    id="postalCode"
+                    label={t(locale, "personalInfo.postalCode")}
+                    value={form.postalCode ?? ""}
+                    onChange={(e) => update({ postalCode: e.target.value })}
+                  />
+                  <Input
+                    id="city"
+                    label={t(locale, "personalInfo.city")}
+                    placeholder={t(locale, "personalInfo.city.placeholder")}
+                    value={form.city ?? ""}
+                    onChange={(e) => update({ city: e.target.value })}
+                  />
+                </FormSection>
 
-              <div className="sm:col-span-2">
-                <p className="mb-1.5 text-sm font-medium text-heading">{t(locale, "personalInfo.dateOfBirth")}</p>
-                <div className="grid grid-cols-3 gap-3">
-                  <Select
-                    id="dob-day"
-                    label={t(locale, "personalInfo.dateOfBirth.day")}
-                    value={dob.day}
-                    onChange={(e) => updateDob({ ...dob, day: e.target.value })}
-                  >
-                    <option value="">—</option>
-                    {DAYS.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </Select>
-                  <Select
-                    id="dob-month"
-                    label={t(locale, "personalInfo.dateOfBirth.month")}
-                    value={dob.month}
-                    onChange={(e) => updateDob({ ...dob, month: e.target.value })}
-                  >
-                    <option value="">—</option>
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                      <option key={m} value={m}>
-                        {monthLabel(m, locale)}
-                      </option>
-                    ))}
-                  </Select>
-                  <Select
-                    id="dob-year"
-                    label={t(locale, "personalInfo.dateOfBirth.year")}
-                    value={dob.year}
-                    onChange={(e) => updateDob({ ...dob, year: e.target.value })}
-                  >
-                    <option value="">—</option>
-                    {BIRTH_YEARS.map((y) => (
-                      <option key={y} value={y}>
-                        {y}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-              </div>
-
-              <Input
-                id="drivingLicence"
-                label={t(locale, "personalInfo.drivingLicence")}
-                value={form.drivingLicence ?? ""}
-                onChange={(e) => update({ drivingLicence: e.target.value })}
-              />
-
-              <div>
-                <Select
-                  id="gender"
-                  label={t(locale, "personalInfo.gender")}
-                  value={gender}
-                  onChange={(e) => update({ gender: (e.target.value || null) as Gender | null })}
-                >
-                  <option value="">{t(locale, "personalInfo.gender.placeholder")}</option>
-                  {genderSchema.options.map((option) => (
-                    <option key={option} value={option}>
-                      {t(locale, `personalInfo.gender.${option}`)}
-                    </option>
-                  ))}
-                </Select>
-                {gender === "self_described" && (
-                  <div className="mt-3">
-                    <Input
-                      id="genderSelfDescribed"
-                      label={t(locale, "personalInfo.genderSelfDescribed")}
-                      value={form.genderSelfDescribed ?? ""}
-                      onChange={(e) => update({ genderSelfDescribed: e.target.value })}
-                    />
+                <FormSection title={t(locale, "personalInfo.section.details")}>
+                  <div className="sm:col-span-2">
+                    <p className="mb-1.5 text-sm font-medium text-heading">{t(locale, "personalInfo.dateOfBirth")}</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      <Select
+                        id="dob-day"
+                        label={t(locale, "personalInfo.dateOfBirth.day")}
+                        value={dob.day}
+                        onChange={(e) => updateDob({ ...dob, day: e.target.value })}
+                      >
+                        <option value="">—</option>
+                        {DAYS.map((d) => (
+                          <option key={d} value={d}>
+                            {d}
+                          </option>
+                        ))}
+                      </Select>
+                      <Select
+                        id="dob-month"
+                        label={t(locale, "personalInfo.dateOfBirth.month")}
+                        value={dob.month}
+                        onChange={(e) => updateDob({ ...dob, month: e.target.value })}
+                      >
+                        <option value="">—</option>
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                          <option key={m} value={m}>
+                            {monthLabel(m, locale)}
+                          </option>
+                        ))}
+                      </Select>
+                      <Select
+                        id="dob-year"
+                        label={t(locale, "personalInfo.dateOfBirth.year")}
+                        value={dob.year}
+                        onChange={(e) => updateDob({ ...dob, year: e.target.value })}
+                      >
+                        <option value="">—</option>
+                        {BIRTH_YEARS.map((y) => (
+                          <option key={y} value={y}>
+                            {y}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
                   </div>
-                )}
-              </div>
 
-              <Input
-                id="nationality"
-                label={t(locale, "personalInfo.nationality")}
-                value={form.nationality ?? ""}
-                onChange={(e) => update({ nationality: e.target.value })}
-              />
-              <Input
-                id="maritalStatus"
-                label={t(locale, "personalInfo.maritalStatus")}
-                value={form.maritalStatus ?? ""}
-                onChange={(e) => update({ maritalStatus: e.target.value })}
-              />
-              <Input
-                id="linkedin"
-                label={t(locale, "personalInfo.linkedin")}
-                value={form.linkedin ?? ""}
-                onChange={(e) => update({ linkedin: e.target.value })}
-              />
-              <Input
-                id="website"
-                label={t(locale, "personalInfo.website")}
-                value={form.website ?? ""}
-                onChange={(e) => update({ website: e.target.value })}
-              />
+                  <Input
+                    id="placeOfBirth"
+                    label={t(locale, "personalInfo.placeOfBirth")}
+                    value={form.placeOfBirth ?? ""}
+                    onChange={(e) => update({ placeOfBirth: e.target.value })}
+                  />
+
+                  <div>
+                    <Select
+                      id="gender"
+                      label={t(locale, "personalInfo.gender")}
+                      value={gender}
+                      onChange={(e) => update({ gender: (e.target.value || null) as Gender | null })}
+                    >
+                      <option value="">{t(locale, "personalInfo.gender.placeholder")}</option>
+                      {genderSchema.options.map((option) => (
+                        <option key={option} value={option}>
+                          {t(locale, `personalInfo.gender.${option}`)}
+                        </option>
+                      ))}
+                    </Select>
+                    {gender === "self_described" && (
+                      <div className="mt-3">
+                        <Input
+                          id="genderSelfDescribed"
+                          label={t(locale, "personalInfo.genderSelfDescribed")}
+                          value={form.genderSelfDescribed ?? ""}
+                          onChange={(e) => update({ genderSelfDescribed: e.target.value })}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <Input
+                    id="nationality"
+                    label={t(locale, "personalInfo.nationality")}
+                    value={form.nationality ?? ""}
+                    onChange={(e) => update({ nationality: e.target.value })}
+                  />
+                  <Input
+                    id="maritalStatus"
+                    label={t(locale, "personalInfo.maritalStatus")}
+                    value={form.maritalStatus ?? ""}
+                    onChange={(e) => update({ maritalStatus: e.target.value })}
+                  />
+                  <Input
+                    id="drivingLicence"
+                    label={t(locale, "personalInfo.drivingLicence")}
+                    value={form.drivingLicence ?? ""}
+                    onChange={(e) => update({ drivingLicence: e.target.value })}
+                  />
+                </FormSection>
+
+                <FormSection title={t(locale, "personalInfo.section.online")}>
+                  <Input
+                    id="linkedin"
+                    label={t(locale, "personalInfo.linkedin")}
+                    value={form.linkedin ?? ""}
+                    onChange={(e) => update({ linkedin: e.target.value })}
+                  />
+                  <Input
+                    id="website"
+                    label={t(locale, "personalInfo.website")}
+                    value={form.website ?? ""}
+                    onChange={(e) => update({ website: e.target.value })}
+                  />
+                </FormSection>
+              </div>
             </div>
           </div>
         </div>
