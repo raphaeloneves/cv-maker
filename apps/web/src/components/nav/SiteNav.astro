@@ -26,6 +26,9 @@ interface Props {
 const { surface = "dark" } = Astro.props;
 const locale = DEFAULT_LOCALE;
 const isDark = surface === "dark";
+
+const localeActiveClasses = "bg-white text-navy-deep shadow-sm";
+const localeInactiveClasses = isDark ? "text-ice/70 hover:text-white" : "text-text-muted hover:text-heading";
 ---
 
 <header
@@ -36,7 +39,7 @@ const isDark = surface === "dark";
       : "border-[var(--border-on-light)] bg-surface-page/90 text-heading",
   ]}
 >
-  <div class="mx-auto flex max-w-6xl items-center justify-between px-5 py-3 sm:px-8">
+  <div class="mx-auto flex max-w-7xl items-center justify-between px-5 py-3 sm:px-8">
     <a href="/" class="flex items-baseline gap-1.5 font-display font-extrabold tracking-tight">
       <span class={isDark ? "text-white" : "text-heading"}>CV</span>
       <span class="text-orange">Maker</span>
@@ -63,18 +66,45 @@ const isDark = surface === "dark";
     </nav>
 
     <div class="flex items-center gap-2 sm:gap-3">
-      <button
-        id="locale-toggle"
-        type="button"
+      {/* Both languages shown side by side, the active one visibly filled in
+       * — not a single button labeled with whatever you'd switch *to* (the
+       * earlier implementation), which reads as "what does this do?" rather
+       * than "what language am I in?" at a glance. Same pattern as the CV
+       * content-language picker on the Personal Info step, so the "this
+       * toggles a language, pick either side" language is consistent
+       * app-wide. Astro renders `en` active by default (DEFAULT_LOCALE); the
+       * script below corrects it client-side if a stored `pt-PT` preference
+       * exists, same indirection LocaleHydration.astro uses for text. */}
+      <div
+        id="locale-switch"
+        role="radiogroup"
         aria-label="Switch language"
-        class={`mono-label rounded-md border px-2 py-1 text-[11px] transition-colors duration-fast ease-standard ${
-          isDark
-            ? "border-[var(--border-on-dark)] text-ice hover:bg-navy-mid"
-            : "border-[var(--border-on-light)] text-body hover:bg-surface-sunken"
-        }`}
+        data-active-classes={localeActiveClasses}
+        data-inactive-classes={localeInactiveClasses}
+        class:list={[
+          "inline-flex rounded-md border p-0.5",
+          isDark ? "border-[var(--border-on-dark)] bg-navy-mid/50" : "border-[var(--border-on-light)] bg-surface-sunken/60",
+        ]}
       >
-        <span data-i18n="nav.localeToggle">{t(locale, "nav.localeToggle")}</span>
-      </button>
+        <button
+          type="button"
+          data-locale-option="en"
+          role="radio"
+          aria-checked="true"
+          class:list={["locale-switch-option mono-label rounded-[5px] px-2.5 py-1 text-[11px] transition-colors duration-fast ease-standard", localeActiveClasses]}
+        >
+          EN
+        </button>
+        <button
+          type="button"
+          data-locale-option="pt-PT"
+          role="radio"
+          aria-checked="false"
+          class:list={["locale-switch-option mono-label rounded-[5px] px-2.5 py-1 text-[11px] transition-colors duration-fast ease-standard", localeInactiveClasses]}
+        >
+          PT
+        </button>
+      </div>
       <span id="nav-guest" class="flex items-center gap-2 sm:gap-3">
         <a
           href="/login"
@@ -117,13 +147,34 @@ const isDark = surface === "dark";
 </header>
 
 <script>
-  import { getStoredLocale, setStoredLocale, otherLocale } from "@/lib/locale";
+  import { getStoredLocale, setStoredLocale } from "@/lib/locale";
   import { refreshSession } from "@/lib/api-client";
   import { logOut } from "@/domains/auth/api";
+  import type { BuilderLocale } from "@cv-maker/contracts";
 
-  const toggle = document.getElementById("locale-toggle");
-  toggle?.addEventListener("click", () => {
-    setStoredLocale(otherLocale(getStoredLocale()));
+  const localeSwitch = document.getElementById("locale-switch");
+  const activeClasses = (localeSwitch?.dataset.activeClasses ?? "").split(" ").filter(Boolean);
+  const inactiveClasses = (localeSwitch?.dataset.inactiveClasses ?? "").split(" ").filter(Boolean);
+
+  function paintLocaleSwitch(current: BuilderLocale) {
+    localeSwitch?.querySelectorAll<HTMLButtonElement>("[data-locale-option]").forEach((btn) => {
+      const isActive = btn.dataset.localeOption === current;
+      btn.classList.remove(...activeClasses, ...inactiveClasses);
+      btn.classList.add(...(isActive ? activeClasses : inactiveClasses));
+      btn.setAttribute("aria-checked", String(isActive));
+    });
+  }
+
+  // Astro renders the "en" option active by default (DEFAULT_LOCALE) since
+  // there's no per-request server to pick a locale before render — correct
+  // it here the same way LocaleHydration.astro corrects text nodes.
+  paintLocaleSwitch(getStoredLocale());
+
+  localeSwitch?.addEventListener("click", (e) => {
+    const button = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-locale-option]");
+    const next = button?.dataset.localeOption;
+    if (next !== "en" && next !== "pt-PT") return;
+    setStoredLocale(next);
     window.location.reload();
   });
 

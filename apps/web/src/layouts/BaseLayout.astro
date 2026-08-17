@@ -27,9 +27,15 @@ const { title, description, surface = "light", showNav = true, showFooter = true
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content={description ?? "CV Maker — build a polished CV in minutes, free to start and free to export."} />
+    <meta name="description" content={description ?? "CV Maker. Build a polished CV in minutes, free to start and free to export."} />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230A1628%22/><text x=%2250%22 y=%2266%22 font-size=%2260%22 text-anchor=%22middle%22 fill=%22%23E8640C%22 font-family=%22sans-serif%22>C</text></svg>" />
-    <title>{title} — CV Maker</title>
+    {/* A middot separator, not "{title}, CV Maker" — a comma placed directly
+     * after a `{expression}` in Astro template text triggers a parser bug
+     * that silently drops the following `<body>` tag's attributes (verified:
+     * reproduces in a clean `astro build`, unrelated to dev-server caching).
+     * Also sidesteps the "no em dashes" copy rule for what isn't really a
+     * sentence anyway. */}
+    <title>{title} · CV Maker</title>
   </head>
   <body data-surface={surface}>
     {showNav && <SiteNav surface={surface} />}
