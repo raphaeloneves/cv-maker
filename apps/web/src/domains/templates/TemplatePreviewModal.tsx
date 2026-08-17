@@ -96,9 +96,11 @@ export function TemplatePreviewModal({
           </ScaledPreview>
         </div>
 
-        <Button onClick={onConfirmSelect} disabled={selected} className="self-start">
-          {selected ? t(locale, "templates.selected") : `${t(locale, "templates.select")} ${definition.name}`}
-        </Button>
+        <div className="flex items-center border-t border-[var(--border-on-light)] pt-4">
+          <Button onClick={onConfirmSelect} disabled={selected} className="self-start">
+            {selected ? t(locale, "templates.selected") : `${t(locale, "templates.select")} ${definition.name}`}
+          </Button>
+        </div>
       </div>
     </Modal>
   );

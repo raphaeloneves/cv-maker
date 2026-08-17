@@ -30,7 +30,7 @@ export function TemplateCard({ definition, selected, color, onOpenPreview }: Tem
       )}
     >
       {selected && (
-        <span className="absolute right-3 top-3 grid h-6 w-6 place-items-center rounded-full bg-orange text-white">
+        <span className="absolute right-3 top-3 z-10 grid h-6 w-6 place-items-center rounded-full bg-orange text-white">
           <CheckIcon width={13} height={13} />
         </span>
       )}

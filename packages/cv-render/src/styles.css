@@ -829,7 +829,7 @@
 
 .cv-document--marrakech .cv-marrakech__body {
   display: grid;
-  grid-template-columns: 1fr 58mm;
+  grid-template-columns: 1fr 64mm;
 }
 
 .cv-document--marrakech .cv-marrakech__main {
@@ -851,14 +851,19 @@
 }
 
 .cv-document--marrakech .cv-marrakech__sidebar {
-  margin: 12mm 12mm 12mm 0;
-  padding: 14mm 10mm;
+  margin: 10mm 8mm 10mm 0;
+  padding: 12mm 8mm;
   border-radius: 8pt;
   background: color-mix(in srgb, var(--accent) 8%, #fff9f4);
   border: 1pt solid color-mix(in srgb, var(--accent) 22%, transparent);
   display: flex;
   flex-direction: column;
   gap: 16pt;
+  /* The card's own inner content (name/labels/meters below) must never push
+     this column wider than the fixed 64mm grid track it's given — without
+     this, a long unbroken value (e.g. an email address) or the meter's
+     minimum width can force the whole card past the sidebar's right edge. */
+  min-width: 0;
 }
 
 .cv-document--marrakech .cv-marrakech__sidebar .cv-section__title {
@@ -880,6 +885,22 @@
 .cv-document--marrakech .cv-marrakech__sidebar .cv-hobbies__chip {
   border-color: color-mix(in srgb, var(--accent) 35%, transparent);
   background: #ffffff;
+}
+
+/* The sidebar column is comfortably wide but not wide enough for a skill/
+   language name next to a fixed 76pt bar meter on the same line without
+   overflowing — stack name above meter instead (same pattern as Geneva's
+   sidebar below), and let the bar meter fill the available width rather
+   than stay a fixed 76pt, so it can never bleed past the card's edge. */
+.cv-document--marrakech .cv-marrakech__sidebar .cv-skills__item,
+.cv-document--marrakech .cv-marrakech__sidebar .cv-languages__item {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3pt;
+}
+
+.cv-document--marrakech .cv-marrakech__sidebar .cv-meter--bar {
+  width: 100%;
 }
 
 /* ======================================================================= */

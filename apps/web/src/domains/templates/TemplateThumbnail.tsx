@@ -43,7 +43,16 @@ export function TemplateThumbnail({ templateId, color, className }: TemplateThum
   return (
     <div
       ref={frameRef}
-      className={["relative w-full overflow-hidden bg-white", className].filter(Boolean).join(" ")}
+      // Deliberately NOT `position: relative` — this frame doesn't need to be
+      // a positioning anchor for anything inside it (the scaled inner div
+      // just scales in normal flow), and giving it one would make it a
+      // "positioned" element that paints above the card's absolutely-
+      // positioned "selected" checkmark badge (a sibling higher up in
+      // TemplateCard.tsx) regardless of DOM order, since both would then
+      // compete in the same paint layer ordered by tree position. Plain
+      // `overflow: hidden` on a static element clips its own content fine
+      // without needing `position` at all.
+      className={["w-full overflow-hidden bg-white", className].filter(Boolean).join(" ")}
       style={{ aspectRatio: "210 / 297" }}
       aria-hidden="true"
     >
