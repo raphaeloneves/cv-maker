@@ -17,7 +17,12 @@ interface FieldShellProps {
  * same way here. */
 export function FieldShell({ label, htmlFor, required, error, hint, children }: FieldShellProps) {
   return (
-    <div className="flex flex-col gap-1.5">
+    // mx-2 (0.5rem each side) gives the focus ring's soft glow (ring-4,
+    // extending outward from the input's own border) room to breathe
+    // instead of touching the neighboring field or the container's edge —
+    // without this, an inset ring on the first/last field in a row reads as
+    // clipped.
+    <div className="mx-2 flex flex-col gap-1.5">
       <label htmlFor={htmlFor} className="text-sm font-medium text-heading">
         {label}
         {required && <span className="text-orange ml-0.5">*</span>}
