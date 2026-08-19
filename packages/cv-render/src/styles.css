@@ -1,8 +1,8 @@
 /*
  * packages/cv-render/src/styles.css
  *
- * The single, self-contained stylesheet for the 4 CV templates (Helsinki,
- * Lisbon, Kyoto, Denver). Consumed two ways:
+ * The single, self-contained stylesheet for all CV templates (Helsinki,
+ * Lisbon, Kyoto, Denver, Marrakech, Geneva, Porto, Faro). Consumed two ways:
  *   - apps/web imports this file via its bundler for the live browser preview.
  *   - apps/api reads it as raw text (fs.readFileSync) and inlines it into the
  *     Puppeteer HTML wrapper for PDF export.
@@ -249,6 +249,17 @@
 
 .cv-document .cv-section + .cv-section {
   margin-top: 18pt;
+}
+
+/* Extra breathing room for a section that starts a new page
+   (forcePageBreak): without it, the section sits right at the page's own
+   top margin, reading as cramped next to a section that just naturally
+   flowed onto a new page. Matches `.cv-section + .cv-section` above on
+   specificity and comes after it in source order, so it wins the tie for
+   any section that's both a sibling and a page-break start — see
+   layout/page-break.ts for how `cv-section--break-before` gets attached. */
+.cv-document .cv-section + .cv-section--break-before {
+  margin-top: 2rem;
 }
 
 .cv-document .cv-timeline {
@@ -985,4 +996,198 @@
   text-transform: uppercase;
   color: var(--accent);
   margin-bottom: 10pt;
+}
+
+/* ======================================================================= */
+/* PORTO — single column, no sidebar, no photo, text meters. Premium, and  */
+/* the gallery's "Recommended" pick. Quiet and text-first: a large name, a  */
+/* single pipe-separated contact line, one accent rule, then every section  */
+/* in full, unabridged narrative detail — built for a long, senior career   */
+/* history and to read cleanly through an ATS parser.                      */
+/* ======================================================================= */
+
+.cv-document--porto .cv-porto__page {
+  padding: 22mm 24mm;
+}
+
+.cv-document--porto .cv-porto__header {
+  display: flex;
+  flex-direction: column;
+  gap: 6pt;
+  padding-bottom: 12pt;
+  border-bottom: 2pt solid var(--accent);
+}
+
+.cv-document--porto .cv-porto__name {
+  font-family: var(--cv-font-display);
+  font-weight: 800;
+  font-size: 23pt;
+  letter-spacing: -0.01em;
+  color: var(--cv-ink);
+}
+
+.cv-document--porto .cv-porto__contact {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4pt 0;
+}
+
+.cv-document--porto .cv-porto__contact .cv-contact-list__item + .cv-contact-list__item {
+  margin-left: 10pt;
+}
+
+.cv-document--porto .cv-porto__contact .cv-contact-list__item + .cv-contact-list__item::before {
+  content: "";
+  display: inline-block;
+  width: 1pt;
+  height: 8pt;
+  margin-right: 10pt;
+  background: var(--cv-hairline);
+}
+
+.cv-document--porto .cv-porto__main {
+  padding-top: 16pt;
+  display: flex;
+  flex-direction: column;
+}
+
+.cv-document--porto .cv-porto__main .cv-section + .cv-section {
+  margin-top: 16pt;
+}
+
+/* Same page-break breathing room as the base rule above, at matching
+   specificity for this template's own scoped selector. */
+.cv-document--porto .cv-porto__main .cv-section + .cv-section--break-before {
+  margin-top: 2rem;
+}
+
+.cv-document--porto .cv-porto__section .cv-section__title {
+  display: block;
+  font-family: var(--cv-font-display);
+  font-weight: 800;
+  font-size: 9.5pt;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 9pt;
+  padding-bottom: 5pt;
+  border-bottom: 1pt solid var(--cv-hairline);
+}
+
+/* ======================================================================= */
+/* FARO — Porto's one-page companion. Same quiet, text-first design, but    */
+/* compact throughout: the most recent role keeps full detail, every role   */
+/* before it condenses to a single scan-friendly line. Premium.            */
+/* ======================================================================= */
+
+.cv-document--faro .cv-faro__page {
+  padding: 18mm 22mm;
+}
+
+.cv-document--faro .cv-faro__header {
+  display: flex;
+  flex-direction: column;
+  gap: 5pt;
+  padding-bottom: 10pt;
+  border-bottom: 2pt solid var(--accent);
+}
+
+.cv-document--faro .cv-faro__name {
+  font-family: var(--cv-font-display);
+  font-weight: 800;
+  font-size: 20pt;
+  letter-spacing: -0.01em;
+  color: var(--cv-ink);
+}
+
+.cv-document--faro .cv-faro__contact {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3pt 0;
+}
+
+.cv-document--faro .cv-faro__contact .cv-contact-list__item {
+  font-size: 7.5pt;
+}
+
+.cv-document--faro .cv-faro__contact .cv-contact-list__item + .cv-contact-list__item {
+  margin-left: 9pt;
+}
+
+.cv-document--faro .cv-faro__contact .cv-contact-list__item + .cv-contact-list__item::before {
+  content: "";
+  display: inline-block;
+  width: 1pt;
+  height: 7pt;
+  margin-right: 9pt;
+  background: var(--cv-hairline);
+}
+
+.cv-document--faro .cv-faro__main {
+  padding-top: 12pt;
+  display: flex;
+  flex-direction: column;
+}
+
+.cv-document--faro .cv-faro__main .cv-section + .cv-section {
+  margin-top: 11pt;
+}
+
+/* Same page-break breathing room as the base rule above, at matching
+   specificity for this template's own scoped selector. */
+.cv-document--faro .cv-faro__main .cv-section + .cv-section--break-before {
+  margin-top: 2rem;
+}
+
+.cv-document--faro .cv-faro__section .cv-section__title {
+  display: block;
+  font-family: var(--cv-font-display);
+  font-weight: 800;
+  font-size: 8.5pt;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 7pt;
+  padding-bottom: 4pt;
+  border-bottom: 1pt solid var(--cv-hairline);
+}
+
+.cv-document--faro .cv-faro-condensed-list {
+  display: flex;
+  flex-direction: column;
+  margin-top: 2pt;
+}
+
+.cv-document--faro .cv-faro-condensed {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10pt;
+  padding: 2.5pt 0;
+}
+
+.cv-document--faro .cv-faro-condensed__title {
+  font-size: 9pt;
+  color: var(--cv-ink);
+}
+
+.cv-document--faro .cv-faro-condensed__role {
+  font-weight: 700;
+}
+
+.cv-document--faro .cv-faro-condensed__employer {
+  color: var(--cv-muted);
+  font-weight: 400;
+}
+
+.cv-document--faro .cv-faro-condensed__dates {
+  flex: none;
+  font-family: var(--cv-font-mono);
+  font-size: 7.5pt;
+  letter-spacing: 0.02em;
+  color: var(--cv-muted);
+  white-space: nowrap;
+  text-align: right;
 }

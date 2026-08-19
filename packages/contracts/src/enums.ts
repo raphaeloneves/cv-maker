@@ -84,5 +84,14 @@ export type SubscriptionStatus = z.infer<typeof subscriptionStatusSchema>;
 export const userRoleSchema = z.enum(["user", "admin"]);
 export type UserRole = z.infer<typeof userRoleSchema>;
 
-export const templateIdSchema = z.enum(["helsinki", "lisbon", "kyoto", "denver", "marrakech", "geneva"]);
+export const templateIdSchema = z.enum([
+  "helsinki",
+  "lisbon",
+  "kyoto",
+  "denver",
+  "marrakech",
+  "geneva",
+  "porto",
+  "faro",
+]);
 export type TemplateId = z.infer<typeof templateIdSchema>;

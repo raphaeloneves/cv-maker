@@ -26,7 +26,11 @@ export function TemplateCard({ definition, selected, color, onOpenPreview }: Tem
       onClick={onOpenPreview}
       className={clsx(
         "group relative flex flex-col gap-3 rounded-lg border bg-surface-card p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg",
-        selected ? "border-orange ring-2 ring-orange/40" : "border-[var(--border-on-light)]",
+        selected
+          ? "border-orange ring-2 ring-orange/40"
+          : definition.recommended
+            ? "border-orange/40"
+            : "border-[var(--border-on-light)]",
       )}
     >
       {selected && (
@@ -39,11 +43,18 @@ export function TemplateCard({ definition, selected, color, onOpenPreview }: Tem
       </div>
       <div className="flex items-center justify-between">
         <span className="font-display font-bold text-heading">{definition.name}</span>
-        {definition.premium && (
-          <span className="mono-label rounded-pill bg-navy-deep px-2 py-0.5 text-[10px] text-white">
-            {t(locale, "templates.premium")}
-          </span>
-        )}
+        <div className="flex items-center gap-1.5">
+          {definition.recommended && (
+            <span className="mono-label rounded-pill bg-orange px-2 py-0.5 text-[10px] text-white">
+              {t(locale, "templates.recommended")}
+            </span>
+          )}
+          {definition.premium && (
+            <span className="mono-label rounded-pill bg-navy-deep px-2 py-0.5 text-[10px] text-white">
+              {t(locale, "templates.premium")}
+            </span>
+          )}
+        </div>
       </div>
     </button>
   );

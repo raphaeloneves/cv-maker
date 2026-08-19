@@ -6,11 +6,13 @@
 import React from "react";
 import type { CvRenderData } from "./types.js";
 import { DenverTemplate } from "./templates/denver.js";
+import { FaroTemplate } from "./templates/faro.js";
 import { GenevaTemplate } from "./templates/geneva.js";
 import { HelsinkiTemplate } from "./templates/helsinki.js";
 import { KyotoTemplate } from "./templates/kyoto.js";
 import { LisbonTemplate } from "./templates/lisbon.js";
 import { MarrakechTemplate } from "./templates/marrakech.js";
+import { PortoTemplate } from "./templates/porto.js";
 
 /**
  * The single render entry point used by BOTH the browser-side live preview
@@ -33,5 +35,9 @@ export function CvDocument({ data }: { data: CvRenderData }) {
       return <MarrakechTemplate data={data} />;
     case "geneva":
       return <GenevaTemplate data={data} />;
+    case "porto":
+      return <PortoTemplate data={data} />;
+    case "faro":
+      return <FaroTemplate data={data} />;
   }
 }
