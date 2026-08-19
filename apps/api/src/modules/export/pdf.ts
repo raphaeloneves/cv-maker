@@ -45,7 +45,19 @@ export async function renderHtmlToPdf(html: string): Promise<RenderedPdf> {
   try {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
-    const pdf = await page.pdf({ format: "A4", printBackground: true });
+    // Every template already lays itself out full-bleed against the A4 page
+    // and manages its own internal padding (see each `.cv-<name>__page` rule
+    // in packages/cv-render/src/styles.css) — the stylesheet's `@page {
+    // margin: 0 }` says so too. Puppeteer/Chrome's `page.pdf()` ignores that
+    // CSS rule and applies its own default print margin (~1cm) regardless,
+    // which stacked on top of a template's own padding read as a doubled
+    // border. Setting margin to 0 explicitly here is what actually makes the
+    // page borderless — the CSS `@page` rule alone isn't enough.
+    const pdf = await page.pdf({
+      format: "A4",
+      printBackground: true,
+      margin: { top: "0", right: "0", bottom: "0", left: "0" },
+    });
     return { buffer: Buffer.from(pdf), pageCount: countPages(pdf) };
   } finally {
     await browser.close();
