@@ -25,6 +25,12 @@ enum UserRole {
 
 model User {
   id           String   @id @default(uuid())
+  // Account identity — distinct from PersonalInfo.firstName/lastName, which
+  // is per-CV content (features/19's same "account vs CV content" split as
+  // email). Backfilled empty for pre-existing rows (see the migration and
+  // prisma/seed.ts); the UI falls back to email wherever this is blank.
+  firstName    String   @default("")
+  lastName     String   @default("")
   // Intentionally decoupled from PersonalInfo.email — see features/19.
   email        String   @unique
   passwordHash String
@@ -36,10 +42,11 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  cvs               Cv[]
-  subscription      Subscription?
-  termsAcceptances  TermsAcceptance[]
-  refreshTokens     RefreshToken[]
+  cvs                 Cv[]
+  subscription        Subscription?
+  termsAcceptances    TermsAcceptance[]
+  refreshTokens       RefreshToken[]
+  cvOptimizerReports  CvOptimizerReport[]
 
   @@map("users")
 }
@@ -111,6 +118,8 @@ enum TemplateId {
   DENVER
   MARRAKECH
   GENEVA
+  PORTO
+  FARO
 }
 
 model Cv {
@@ -126,6 +135,13 @@ model Cv {
   personalInfo         PersonalInfo?
   sections             Section[]
   templatePreferences  CvTemplatePreference[]
+  // onDelete: SetNull, not Cascade — a report is a standalone record of a
+  // past analysis; deleting the CV it was run against shouldn't destroy it.
+  cvOptimizerReports   CvOptimizerReport[]
+  // Back-relation for CvOptimizerReport.rewriteCvId — the CV(s), if any,
+  // generated *from* a report's "improved CV" action (as opposed to the CV
+  // a report was originally run against, above).
+  rewrittenFromReports CvOptimizerReport[] @relation("CvOptimizerReportRewriteCv")
 
   @@map("cvs")
 }
@@ -399,4 +415,69 @@ model ReferenceEntry {
 
   @@index([sectionId])
   @@map("reference_entries")
+}
+
+// ---------------------------------------------------------------------------
+// CV Optimizer (Pro feature) — see @cv-maker/contracts cv-optimizer.ts
+// ---------------------------------------------------------------------------
+
+enum CvOptimizerReportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// Deliberately one flat model, not the polymorphic multi-insight-type table
+// this was ported from — this app only ever generates one kind of report,
+// and there's no credit ledger to join against (gating is the same
+// `hasActiveEntitlement()` check as watermark/premium-template access, not a
+// balance). Generation runs as a single Claude call kicked off right after
+// create; status/errorMessage/reportContent track that one call's lifecycle.
+model CvOptimizerReport {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Nullable + SetNull (not Cascade, see Cv's own comment): the report should
+  // outlive the CV it was originally run against.
+  cvId   String?
+  cv     Cv?     @relation(fields: [cvId], references: [id], onDelete: SetNull)
+  // Set instead of cvId when the user uploaded a CV as a PDF rather than
+  // picking one of their own CVs — uploadedCvText is the plain text
+  // extracted from it (same "resolve to text before storage" rule as
+  // jobDescription below), kept for provenance/debugging, not re-read at
+  // generation time (that gets it as a function argument instead).
+  uploadedCvFileName String?
+  uploadedCvText     String? @db.Text
+
+  roleTitle         String
+  // Always resolved to plain text before storage — either pasted directly,
+  // or fetched server-side from jobDescriptionUrl and stripped to text. The
+  // Claude call itself only ever sees this field, never fetches anything.
+  jobDescription    String   @db.Text
+  jobDescriptionUrl String?
+  status            CvOptimizerReportStatus @default(PENDING)
+  errorMessage       String?
+  // The full structured Claude response once status = COMPLETED — see
+  // cvOptimizerReportContentSchema in contracts for the shape.
+  reportContent      Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // "Generate an improved CV" — a second, on-demand Claude call scoped to
+  // this same report (only offered once objectionsScorePercent > 50; see
+  // service.ts's requireRewriteEligible). Same 4-state lifecycle as the
+  // report itself, reusing CvOptimizerReportStatus rather than a second
+  // enum. A named relation since this is CvOptimizerReport's *second* FK
+  // onto Cv (the first being cvId above) — Prisma needs the two
+  // disambiguated. onDelete: SetNull for the same reason as cvId: deleting
+  // the generated CV later shouldn't destroy the report recording that it
+  // happened.
+  rewriteStatus       CvOptimizerReportStatus?
+  rewriteCvId         String?
+  rewriteCv           Cv?                      @relation("CvOptimizerReportRewriteCv", fields: [rewriteCvId], references: [id], onDelete: SetNull)
+  rewriteErrorMessage String?
+
+  @@index([userId])
+  @@map("cv_optimizer_reports")
 }
