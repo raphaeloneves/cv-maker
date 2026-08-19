@@ -21,3 +21,4 @@ export * from "./auth.js";
 export * from "./billing.js";
 export * from "./export.js";
 export * from "./uploads.js";
+export * from "./cv-optimizer.js";

@@ -16,9 +16,14 @@ import { hobbiesConfig } from "../sections/entries/kinds/hobbies.js";
 import { referencesConfig } from "../sections/entries/kinds/references.js";
 import { findSubscriptionByUserId, subscriptionToDomain } from "../billing/repository.js";
 
-type SectionRow = Awaited<ReturnType<typeof db.section.findMany>>[number];
+export type SectionRow = Awaited<ReturnType<typeof db.section.findMany>>[number];
 
-async function buildRenderSection(section: SectionRow): Promise<RenderSection> {
+/** Exported for rewrite-cv.ts: the "Generate an improved CV" pipeline needs
+ * every section's entries too (to copy them onto the new CV), but from an
+ * unfiltered section query — unlike `getRenderData` below, it must include
+ * hidden sections, so a rewritten CV stays a faithful copy of the original
+ * rather than silently dropping whatever the user had hidden. */
+export async function buildRenderSection(section: SectionRow): Promise<RenderSection> {
   const base = sectionToDomain(section);
   const sectionId = section.id;
 

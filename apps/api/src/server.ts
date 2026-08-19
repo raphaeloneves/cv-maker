@@ -15,6 +15,7 @@ import { registerTemplateRoutes } from "./modules/templates/routes.js";
 import { registerCvRenderDataRoutes } from "./modules/cv-render-data/routes.js";
 import { registerExportRoutes } from "./modules/export/routes.js";
 import { registerBillingRoutes } from "./modules/billing/routes.js";
+import { registerCvOptimizerRoutes } from "./modules/cv-optimizer/routes.js";
 
 const app = Fastify({ logger: true });
 
@@ -94,6 +95,7 @@ await registerTemplateRoutes(app);
 await registerCvRenderDataRoutes(app);
 await registerExportRoutes(app);
 await registerBillingRoutes(app);
+await registerCvOptimizerRoutes(app);
 
 app
   .listen({ port: env.API_PORT, host: "0.0.0.0" })

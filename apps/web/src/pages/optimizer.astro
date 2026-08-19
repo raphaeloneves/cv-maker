@@ -1,0 +1,8 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { CvOptimizerPage } from "@/domains/optimizer/CvOptimizerPage";
+---
+
+<BaseLayout title="CV Optimizer" surface="light" showFooter={false} nav="app">
+  <CvOptimizerPage client:load />
+</BaseLayout>

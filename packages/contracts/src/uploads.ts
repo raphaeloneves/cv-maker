@@ -11,3 +11,10 @@ export const uploadPhotoResponseSchema = z.object({
   photoUrl: z.string().url(),
 });
 export type UploadPhotoResponse = z.infer<typeof uploadPhotoResponseSchema>;
+
+/** CV Optimizer's "upload a CV" path (see cv-optimizer.ts) — PDF only, same
+ * reasoning as the reference implementation this was ported from: it only
+ * ever needs to extract plain text, and constraining the input format keeps
+ * that extraction step reliable instead of open-ended. */
+export const ACCEPTED_CV_UPLOAD_MIME_TYPES = ["application/pdf"] as const;
+export const MAX_CV_UPLOAD_BYTES = 8 * 1024 * 1024;

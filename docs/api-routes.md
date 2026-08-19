@@ -117,6 +117,25 @@ Selecting a template (as opposed to just previewing its color) is
 single gate used everywhere watermark/premium-template access is decided —
 `role: 'admin'` always passes regardless of `subscription`.
 
+## CV Optimizer (`cv-optimizer.ts`)
+
+Pro-only feature: pick one of your CVs (or upload one as a PDF), give a role
+title and a job description (pasted text or a URL, fetched server-side as
+plain text before generation — never both), get back a Claude-generated
+evaluation report — a pass/reject verdict against six recruiter objections,
+plus the concrete fixes that would change it. This is an evaluation, not a
+rewrite. Gated by the same `hasActiveEntitlement()` check as everything
+else, not a separate credit balance. One report type, one Claude call
+(`output_config.format` structured output) kicked off in the background
+right after create — no job queue, poll `GET .../reports/:id` for status.
+
+| Method | Path | Body | Response |
+|---|---|---|---|
+| GET | `/cv-optimizer/reports` | — | `CvOptimizerReportSummary[]`, newest first |
+| GET | `/cv-optimizer/reports/:id` | — | `CvOptimizerReport` (full `reportContent` once `status: 'completed'`) |
+| POST | `/cv-optimizer/reports` | `CreateCvOptimizerReportInput` (`cvId` required) | `CvOptimizerReport` with `status: 'pending'` — generation continues in the background |
+| POST | `/cv-optimizer/reports/upload` | multipart: `roleTitle`, `jobDescriptionText` or `jobDescriptionUrl`, `cvFile` (PDF, max 8MB) | Same as above — `cvId` is `null`, `uploadedCvFileName` is set instead |
+
 ## Error shape
 
 All 4xx/5xx responses: `{ "error": { "code": string, "message": string, "fields"?: Record<string, string> } }`.

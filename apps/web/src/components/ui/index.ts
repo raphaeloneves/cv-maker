@@ -7,5 +7,6 @@ export { Toggle } from "./Toggle.js";
 export { Modal } from "./Modal.js";
 export { ConfirmDialog } from "./ConfirmDialog.js";
 export { SaveStatus } from "./SaveStatus.js";
+export { Tooltip } from "./Tooltip.js";
 export type { SaveState } from "./SaveStatus.js";
 export { clsx } from "./clsx.js";

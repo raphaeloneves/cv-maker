@@ -55,7 +55,15 @@ export function ContentBuilder({ cvId }: ContentBuilderProps) {
   const contentLanguage: CvContentLanguage = cvQuery.data?.contentLanguage ?? "en";
   const ids = sections.map((s) => s.id);
 
-  if (isLoading) {
+  // Also gate on renderDataQuery, not just the (lighter, faster) sections
+  // list: freeform content only ever comes from render-data (see this
+  // file's own doc comment above), and for a CV whose sections are all
+  // populated at once (e.g. the CV Optimizer's "generate an improved CV"
+  // pipeline) render-data is heavy enough to reliably resolve after
+  // sections does. Without this, FreeformSection mounts with `null` and
+  // permanently sticks there — its inner autosave state only initializes
+  // once and never resyncs to a later-arriving prop.
+  if (isLoading || renderDataQuery.isLoading) {
     return <p className="text-sm text-text-muted">{t(locale, "content.loading")}</p>;
   }
 
