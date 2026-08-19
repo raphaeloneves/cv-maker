@@ -6,6 +6,8 @@ import type { User } from "../../../generated/client/index.js";
 export function userToAuthUser(user: User): AuthUser {
   return {
     id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
     email: user.email,
     locale: localeToDomain(user.locale),
     role: enumToDomain<UserRole>(user.role),
@@ -22,6 +24,8 @@ export function findUserById(id: string) {
 }
 
 export async function createUser(params: {
+  firstName: string;
+  lastName: string;
   email: string;
   passwordHash: string;
   locale: "pt-PT" | "en";
@@ -29,6 +33,8 @@ export async function createUser(params: {
 }) {
   return db.user.create({
     data: {
+      firstName: params.firstName,
+      lastName: params.lastName,
       email: params.email,
       passwordHash: params.passwordHash,
       locale: localeToDb(params.locale),

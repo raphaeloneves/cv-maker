@@ -35,6 +35,8 @@ export async function signUp(
   }
   const passwordHash = await argon2.hash(input.password, { type: argon2.argon2id });
   const user = await repo.createUser({
+    firstName: input.firstName,
+    lastName: input.lastName,
     email: input.email,
     passwordHash,
     locale: input.locale,

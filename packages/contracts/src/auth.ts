@@ -6,6 +6,8 @@ import { builderLocaleSchema, userRoleSchema } from "./enums.js";
  * the same column, since a professional CV contact email and a personal
  * account/billing email are legitimately allowed to differ. */
 export const signUpSchema = z.object({
+  firstName: z.string().trim().min(1).max(120),
+  lastName: z.string().trim().min(1).max(120),
   email: z.string().trim().email().max(254),
   password: z.string().min(10).max(200),
   locale: builderLocaleSchema.default("pt-PT"),
@@ -25,6 +27,12 @@ export type LogInInput = z.infer<typeof logInSchema>;
 
 export const authUserSchema = z.object({
   id: z.string().uuid(),
+  // Account identity, distinct from PersonalInfo.firstName/lastName (see
+  // that schema's own comment) — blank ("") for accounts created before this
+  // field existed, never null, so callers can render it directly and fall
+  // back to `email` when empty rather than null-checking everywhere.
+  firstName: z.string(),
+  lastName: z.string(),
   email: z.string().email(),
   locale: builderLocaleSchema,
   role: userRoleSchema,
