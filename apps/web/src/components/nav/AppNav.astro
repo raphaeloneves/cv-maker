@@ -1,0 +1,221 @@
+---
+/**
+ * Top bar for every authenticated ("app shell") page — dashboard, the 4
+ * builder steps, CV Optimizer, Billing, Account. Deliberately not SiteNav:
+ * per the brand doc (see styles/tokens.css), the dark Navy Deep header is
+ * reserved for marketing/funnel chrome, and Home/Pricing are funnel-only
+ * concepts. Once someone has an account they've left the funnel, so this bar
+ * carries a different menu entirely (product sections, not marketing pages)
+ * on the light "Ice" product surface, rather than re-skinning the same
+ * Home/Pricing/Dashboard links.
+ *
+ * Static Astro markup, same reasoning as SiteNav.astro: no per-request
+ * server, so active-link state is derived from `Astro.url.pathname` at build
+ * time — safe here because, unlike a client-side `?cvId=`, each page is its
+ * own prerendered route, so this *is* that page's real path. The one bit of
+ * real client state (the signed-in user's email) hydrates in via a small
+ * inline script, same pattern as SiteNav.
+ *
+ * Unlike SiteNav, there's no locale switch here — for a signed-in visitor
+ * the builder language is an account setting (see AccountPage.tsx's
+ * <LocaleSwitch>), not a control repeated in every page's chrome.
+ *
+ * Every page reachable from here already sits behind <RequireAuth> at the
+ * content level (see domains/auth/components/RequireAuth.tsx) — this bar
+ * doesn't gate anything itself, it just assumes a signed-in visitor and
+ * lets RequireAuth do the actual redirect-to-/login if that assumption is
+ * ever wrong (e.g. a stale bookmark after the session expired).
+ */
+import { t } from "@/i18n";
+import { DEFAULT_LOCALE } from "@/lib/locale";
+
+const locale = DEFAULT_LOCALE;
+const path = Astro.url.pathname;
+
+const ICONS = {
+  cvs: `<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/>`,
+  optimizer: `<path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><path d="M12 8a4 4 0 0 0 4 4 4 4 0 0 0-4 4 4 4 0 0 0-4-4 4 4 0 0 0 4-4Z"/>`,
+  billing: `<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>`,
+  account: `<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>`,
+  logout: `<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/>`,
+  chevron: `<path d="m6 9 6 6 6-6"/>`,
+} as const;
+
+const NAV_ITEMS = [
+  {
+    href: "/dashboard",
+    i18nKey: "nav.dashboard",
+    active: path === "/dashboard" || path.startsWith("/builder"),
+    icon: ICONS.cvs,
+  },
+  {
+    href: "/optimizer",
+    i18nKey: "nav.optimizer",
+    active: path.startsWith("/optimizer"),
+    icon: ICONS.optimizer,
+    badgeKey: "nav.badge.pro",
+  },
+  {
+    href: "/billing",
+    i18nKey: "nav.billing",
+    active: path.startsWith("/billing"),
+    icon: ICONS.billing,
+  },
+  {
+    href: "/account",
+    i18nKey: "nav.account",
+    active: path.startsWith("/account"),
+    icon: ICONS.account,
+  },
+] as const;
+---
+
+<header class="sticky top-0 z-40 border-b border-[var(--border-on-light)] bg-surface-page/90 text-heading backdrop-blur">
+  <div class="mx-auto flex max-w-[90rem] flex-wrap items-center justify-between gap-y-2 gap-x-4 px-5 py-3 sm:px-8">
+    <a href="/dashboard" class="flex items-baseline gap-1.5 font-display font-extrabold tracking-tight">
+      <span class="text-heading">CV</span>
+      <span class="text-orange">Maker</span>
+    </a>
+
+    <nav class="flex items-center gap-0.5 sm:gap-1" aria-label="Primary">
+      {
+        NAV_ITEMS.map((item) => (
+          <a
+            href={item.href}
+            class:list={[
+              "flex items-center gap-1.5 rounded-pill px-2 py-1.5 text-sm font-semibold transition-colors duration-fast ease-standard sm:px-3",
+              item.active ? "bg-orange/10 text-heading" : "text-text-muted hover:text-heading",
+            ]}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="shrink-0"
+              set:html={item.icon}
+            />
+            {/* data-i18n goes on this inner span, not the <a> — LocaleHydration.astro
+             * replaces the *whole* tagged element's textContent, which would wipe out
+             * the icon/badge siblings above/below if it were tagged any higher. */}
+            <span class="hidden sm:inline" data-i18n={item.i18nKey}>{t(locale, item.i18nKey)}</span>
+            {"badgeKey" in item && (
+              <span class="mono-label hidden rounded-pill bg-navy-deep px-1.5 py-0.5 text-[9px] text-white sm:inline" data-i18n={item.badgeKey}>
+                {t(locale, item.badgeKey)}
+              </span>
+            )}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="relative" id="app-user-menu">
+      <button
+        type="button"
+        id="app-user-menu-trigger"
+        aria-haspopup="menu"
+        aria-expanded="false"
+        class="flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors duration-fast ease-standard hover:bg-surface-sunken sm:pr-2.5"
+      >
+        <span
+          id="app-user-menu-avatar"
+          class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-navy-deep text-xs font-bold text-white"
+        >
+        </span>
+        {/* First + last name (see the inline script below); falls back to
+         * email for the rare account created before that field existed. */}
+        <span id="app-user-menu-label" class="hidden max-w-[14ch] truncate text-sm font-semibold text-heading sm:inline"></span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden shrink-0 text-text-muted sm:block" set:html={ICONS.chevron} />
+      </button>
+
+      <div
+        id="app-user-menu-panel"
+        role="menu"
+        aria-label={t(locale, "nav.account")}
+        class="invisible absolute right-0 top-full z-50 mt-2 w-56 origin-top-right scale-95 rounded-md border border-[var(--border-on-light)] bg-surface-card p-1 opacity-0 shadow-lg transition duration-fast ease-standard"
+      >
+        <p id="app-user-menu-email" class="truncate px-3 py-2 text-sm text-text-muted"></p>
+        <div class="my-1 border-t border-[var(--border-on-light)]"></div>
+        <a
+          href="/account"
+          role="menuitem"
+          data-i18n="nav.accountSettings"
+          class="block rounded-[5px] px-3 py-2 text-sm font-medium text-heading transition-colors duration-fast ease-standard hover:bg-surface-sunken"
+        >
+          {t(locale, "nav.accountSettings")}
+        </a>
+        <button
+          type="button"
+          id="app-nav-logout"
+          role="menuitem"
+          data-i18n="nav.logout"
+          class="block w-full rounded-[5px] px-3 py-2 text-left text-sm font-medium text-heading transition-colors duration-fast ease-standard hover:bg-surface-sunken"
+        >
+          {t(locale, "nav.logout")}
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  import { refreshSession } from "@/lib/api-client";
+  import { logOut } from "@/domains/auth/api";
+
+  const menuRoot = document.getElementById("app-user-menu");
+  const menuTrigger = document.getElementById("app-user-menu-trigger");
+  const menuPanel = document.getElementById("app-user-menu-panel");
+
+  function setMenuOpen(open: boolean) {
+    menuTrigger?.setAttribute("aria-expanded", String(open));
+    menuPanel?.classList.toggle("invisible", !open);
+    menuPanel?.classList.toggle("opacity-0", !open);
+    menuPanel?.classList.toggle("scale-95", !open);
+    menuPanel?.classList.toggle("opacity-100", open);
+    menuPanel?.classList.toggle("scale-100", open);
+  }
+
+  menuTrigger?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    setMenuOpen(menuTrigger.getAttribute("aria-expanded") !== "true");
+  });
+  document.addEventListener("click", (e) => {
+    if (menuRoot && !menuRoot.contains(e.target as Node)) setMenuOpen(false);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") setMenuOpen(false);
+  });
+
+  // Every page this bar renders on already sits behind <RequireAuth>, which
+  // does its own refreshSession()-and-redirect independently. This one is
+  // purely cosmetic (fill in the trigger + menu once the session resolves) —
+  // failure just leaves them blank, RequireAuth handles the real redirect.
+  refreshSession()
+    .then((session) => {
+      if (!session) return;
+      const { firstName, lastName, email } = session.user;
+      // Blank for accounts created before this field existed (see
+      // AuthUser's contract comment) — fall back to email rather than
+      // showing a bare space or half a name.
+      const fullName = `${firstName} ${lastName}`.trim();
+      const displayName = fullName || email;
+      const label = document.getElementById("app-user-menu-label");
+      const emailRow = document.getElementById("app-user-menu-email");
+      const avatar = document.getElementById("app-user-menu-avatar");
+      if (label) label.textContent = displayName;
+      if (emailRow) emailRow.textContent = email;
+      if (avatar) avatar.textContent = (firstName[0] ?? email[0] ?? "?").toUpperCase();
+    })
+    .catch(() => {
+      /* left blank — RequireAuth on the page content redirects to /login */
+    });
+
+  document.getElementById("app-nav-logout")?.addEventListener("click", async () => {
+    await logOut();
+    window.location.href = "/";
+  });
+</script>

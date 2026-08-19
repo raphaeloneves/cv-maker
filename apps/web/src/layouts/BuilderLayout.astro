@@ -20,7 +20,7 @@ interface Props {
 const { title, currentStep } = Astro.props;
 ---
 
-<BaseLayout title={title} surface="light" showFooter={false}>
+<BaseLayout title={title} surface="light" showFooter={false} nav="app">
   <div class="min-h-[calc(100vh-57px)] px-5 py-8 sm:px-8 sm:py-10">
     <div class="mb-8 flex justify-center sm:mb-12">
       <BuilderStepper client:load currentStep={currentStep} />

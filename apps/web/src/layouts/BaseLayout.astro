@@ -1,6 +1,7 @@
 ---
 import "@/styles/global.css";
 import SiteNav from "@/components/nav/SiteNav.astro";
+import AppNav from "@/components/nav/AppNav.astro";
 import SiteFooter from "@/layouts/SiteFooter.astro";
 import LocaleHydration from "@/layouts/LocaleHydration.astro";
 import ScrollReveal from "@/layouts/ScrollReveal.astro";
@@ -14,12 +15,19 @@ interface Props {
   /** Set false only for full-bleed/standalone pages that render their own
    * header (none currently do — kept as an escape hatch). */
   showNav?: boolean;
+  /** "marketing" (default) = SiteNav, the funnel chrome shown to visitors
+   * and guests (Home, Pricing, log in / start free). "app" = AppNav, the
+   * product shell shown once someone has an account (My CVs, CV Optimizer,
+   * Billing, Account) — every page behind <RequireAuth> should pass this,
+   * since once you're signed in you've left the marketing funnel for good
+   * (see the file-level comment on AppNav.astro). */
+  nav?: "marketing" | "app";
   /** The builder steps render inside their own focused layout without the
    * marketing footer competing for attention — default true for everything
    * else (marketing pages, auth, dashboard). */
   showFooter?: boolean;
 }
-const { title, description, surface = "light", showNav = true, showFooter = true } = Astro.props;
+const { title, description, surface = "light", showNav = true, nav = "marketing", showFooter = true } = Astro.props;
 ---
 
 <!doctype html>
@@ -38,7 +46,7 @@ const { title, description, surface = "light", showNav = true, showFooter = true
     <title>{title} · CV Maker</title>
   </head>
   <body data-surface={surface}>
-    {showNav && <SiteNav surface={surface} />}
+    {showNav && (nav === "app" ? <AppNav /> : <SiteNav surface={surface} />)}
     <slot />
     {showFooter && <SiteFooter />}
     <LocaleHydration />

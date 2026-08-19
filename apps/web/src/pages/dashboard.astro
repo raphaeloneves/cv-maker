@@ -3,6 +3,6 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import { CvDashboard } from "@/domains/cvs/components/CvDashboard";
 ---
 
-<BaseLayout title="My CVs" surface="light" showFooter={false}>
+<BaseLayout title="My CVs" surface="light" showFooter={false} nav="app">
   <CvDashboard client:load />
 </BaseLayout>
