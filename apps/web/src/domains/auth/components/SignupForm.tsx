@@ -65,6 +65,12 @@ export function SignupForm() {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+      {formError && (
+        <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
+          {formError}
+        </p>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2">
         <Input
           id="signup-first-name"
@@ -146,12 +152,6 @@ export function SignupForm() {
           .
         </span>
       </label>
-
-      {formError && (
-        <p role="alert" className="text-sm text-danger">
-          {formError}
-        </p>
-      )}
 
       <Button type="submit" size="lg" loading={submitting} className={clsx("mt-1 w-full")}>
         {submitting ? t(locale, "auth.signup.submitting") : t(locale, "auth.signup.submit")}
