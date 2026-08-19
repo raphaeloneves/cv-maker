@@ -1,0 +1,8 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { BillingPage } from "@/domains/billing/BillingPage";
+---
+
+<BaseLayout title="Billing" surface="light" showFooter={false} nav="app">
+  <BillingPage client:load />
+</BaseLayout>
