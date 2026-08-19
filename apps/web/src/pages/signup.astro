@@ -27,7 +27,7 @@ const locale = DEFAULT_LOCALE;
         <span>CV</span><span class="text-orange">Maker</span>
       </a>
 
-      <div class="relative">
+      <div class="relative flex flex-1 flex-col justify-center">
         <p class="eyebrow text-xs text-orange" data-i18n="marketing.eyebrow">{t(locale, "marketing.eyebrow")}</p>
         <h2 class="mt-3 max-w-sm font-display text-3xl font-extrabold leading-tight tracking-tight text-white" data-i18n="auth.signup.panel.title">
           {t(locale, "auth.signup.panel.title")}
@@ -46,17 +46,6 @@ const locale = DEFAULT_LOCALE;
             <span data-i18n="auth.signup.panel.benefit3">{t(locale, "auth.signup.panel.benefit3")}</span>
           </li>
         </ul>
-
-        <dl class="mt-8 grid grid-cols-2 gap-8 border-t border-[var(--border-on-dark)] pt-5">
-          <div class="flex flex-col-reverse">
-            <dt class="mt-1.5 mono-label text-[9px] text-muted" data-i18n="marketing.hero.stat.templates">{t(locale, "marketing.hero.stat.templates")}</dt>
-            <dd class="font-mono text-2xl font-medium text-white">8</dd>
-          </div>
-          <div class="flex flex-col-reverse">
-            <dt class="mt-1.5 mono-label text-[9px] text-muted" data-i18n="marketing.hero.stat.objections">{t(locale, "marketing.hero.stat.objections")}</dt>
-            <dd class="font-mono text-2xl font-medium text-white">6</dd>
-          </div>
-        </dl>
       </div>
 
       <p class="relative text-xs text-muted" data-i18n="auth.signup.subtitle">{t(locale, "auth.signup.subtitle")}</p>

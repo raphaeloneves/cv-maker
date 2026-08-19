@@ -145,26 +145,6 @@ function starIcon(filled: boolean) {
           </a>
         </div>
 
-        <dl class="mt-12 grid max-w-md grid-cols-3 gap-3 border-t border-[var(--border-on-dark)] pt-6 sm:gap-6">
-          <div class="min-w-0" data-animate="fade-up" style="transition-delay: 60ms">
-            <dt class="mono-label text-[10px] text-muted" data-i18n="marketing.hero.stat.templates">
-              {t(locale, "marketing.hero.stat.templates")}
-            </dt>
-            <dd class="mt-1 font-mono text-2xl font-medium text-white">8</dd>
-          </div>
-          <div class="min-w-0" data-animate="fade-up" style="transition-delay: 120ms">
-            <dt class="mono-label text-[10px] text-muted" data-i18n="marketing.hero.stat.languages">
-              {t(locale, "marketing.hero.stat.languages")}
-            </dt>
-            <dd class="mt-1 font-mono text-2xl font-medium text-white">2</dd>
-          </div>
-          <div class="min-w-0" data-animate="fade-up" style="transition-delay: 180ms">
-            <dt class="mono-label text-[10px] text-muted" data-i18n="marketing.hero.stat.objections">
-              {t(locale, "marketing.hero.stat.objections")}
-            </dt>
-            <dd class="mt-1 font-mono text-2xl font-medium text-white">6</dd>
-          </div>
-        </dl>
       </div>
 
       <!-- Signature element: an animated frame around a screenshot of the
@@ -172,7 +152,7 @@ function starIcon(filled: boolean) {
            and score gauge (see VerdictStamp.tsx / ScoreGauge.tsx) recreated
            floating on top of it. The screenshot itself is a placeholder —
            see the instructions in the comment below the frame. -->
-      <div class="relative mx-auto w-full min-w-0 max-w-md" data-animate="fade-up">
+      <div class="relative mx-auto w-full min-w-0 max-w-xl" data-animate="fade-up">
         <div data-animate="float" class="relative rounded-lg bg-white p-2.5 shadow-2xl shadow-black/40" style="transform: rotate(-1.5deg);">
           <div class="flex items-center gap-1.5 px-2 pb-2 pt-1">
             <span class="h-2.5 w-2.5 rounded-full bg-[#e0e4ea]"></span>
@@ -214,29 +194,34 @@ function starIcon(filled: boolean) {
 
         <div
           data-animate="float"
-          style="animation-delay: -3s;"
-          class="absolute -right-5 -top-6 flex flex-col items-center gap-1 rounded-lg bg-navy-mid px-4 py-3 shadow-lg"
+          style="animation-delay: -3s; transform: rotate(-3deg);"
+          class="absolute -top-9 left-14 flex items-center gap-2 rounded-pill bg-navy-mid px-4 py-2.5 shadow-lg"
         >
-          <div class="relative flex h-16 w-16 items-center justify-center">
-            <svg viewBox="0 0 120 120" width="64" height="64" class="-rotate-90" aria-hidden="true">
-              <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="10" />
-              <circle
-                data-animate="ring"
-                cx="60"
-                cy="60"
-                r="52"
-                fill="none"
-                stroke="var(--success)"
-                stroke-width="10"
-                stroke-linecap="round"
-                stroke-dasharray="326.73"
-                stroke-dashoffset="26.14"
-              />
-            </svg>
-            <span class="absolute font-display text-lg font-extrabold text-white">92</span>
-          </div>
-          <span class="mono-label text-[8px] text-ice/70" data-i18n="optimizer.detail.score.label">
-            {t(locale, "optimizer.detail.score.label")}
+          <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-warm/20" set:html={icon("check", "var(--orange-warm)", 12)} />
+          <span class="whitespace-nowrap text-xs font-semibold text-white" data-i18n="marketing.hero.badge.human">
+            {t(locale, "marketing.hero.badge.human")}
+          </span>
+        </div>
+
+        <div
+          data-animate="float"
+          style="animation-delay: -5.4s; transform: rotate(6deg);"
+          class="absolute -right-10 top-[42%] flex items-center gap-2 rounded-pill bg-navy-mid px-5 py-3 shadow-xl"
+        >
+          <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange/20" set:html={icon("check", "var(--orange)", 14)} />
+          <span class="whitespace-nowrap text-sm font-semibold text-white" data-i18n="marketing.hero.badge.ai">
+            {t(locale, "marketing.hero.badge.ai")}
+          </span>
+        </div>
+
+        <div
+          data-animate="float"
+          style="animation-delay: -1.2s; transform: rotate(2deg);"
+          class="absolute -bottom-9 right-10 flex items-center gap-2 rounded-pill bg-navy-mid px-4 py-2.5 shadow-lg"
+        >
+          <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/20" set:html={icon("check", "var(--success)", 12)} />
+          <span class="whitespace-nowrap text-xs font-semibold text-white" data-i18n="marketing.hero.badge.ats">
+            {t(locale, "marketing.hero.badge.ats")}
           </span>
         </div>
       </div>

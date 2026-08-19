@@ -126,16 +126,3 @@ h1, h2, h3, h4 {
 @media (prefers-reduced-motion: reduce) {
   .text-gradient-shimmer { animation: none; background-position: 0% 50%; }
 }
-
-/* Draws the hero's score-ring on load, same idea as ScoreGauge.tsx's own
- * stroke-dashoffset transition, just a fixed decorative value here since this
- * is a static marketing mockup, not a live score. */
-@keyframes ring-draw {
-  from { stroke-dashoffset: 327; }
-}
-[data-animate="ring"] {
-  animation: ring-draw 1.1s 0.3s var(--ease-standard) both;
-}
-@media (prefers-reduced-motion: reduce) {
-  [data-animate="ring"] { animation: none; }
-}
