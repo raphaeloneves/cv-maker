@@ -8,22 +8,58 @@ const locale = DEFAULT_LOCALE;
 
 <BaseLayout title="Sign up" surface="light" showFooter={false}>
   <div class="grid min-h-[calc(100vh-57px)] lg:grid-cols-2">
-    <div data-surface="dark" class="hidden flex-col justify-between bg-navy-deep px-12 py-14 lg:flex">
-      <a href="/" class="flex items-baseline gap-1.5 font-display text-xl font-extrabold tracking-tight text-white">
+    <div data-surface="dark" class="relative hidden flex-col justify-between overflow-hidden bg-navy-deep px-12 py-14 lg:flex">
+      <div
+        class="pointer-events-none absolute inset-0 opacity-[0.06]"
+        style="background-image: radial-gradient(var(--ice) 1px, transparent 1px); background-size: 22px 22px;"
+        aria-hidden="true"
+      >
+      </div>
+      <div
+        data-animate="drift"
+        class="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full opacity-20 blur-3xl"
+        style="background: radial-gradient(circle, var(--orange) 0%, transparent 70%);"
+        aria-hidden="true"
+      >
+      </div>
+
+      <a href="/" class="relative flex items-baseline gap-1.5 font-display text-xl font-extrabold tracking-tight text-white">
         <span>CV</span><span class="text-orange">Maker</span>
       </a>
-      <div>
-        <p class="eyebrow text-xs text-orange" data-i18n="auth.signup.eyebrow">{t(locale, "auth.signup.eyebrow")}</p>
-        <h2 class="mt-3 max-w-sm font-display text-3xl font-extrabold leading-tight tracking-tight text-white">
-          Free to build. Free to export. Every time.
+
+      <div class="relative">
+        <p class="eyebrow text-xs text-orange" data-i18n="marketing.eyebrow">{t(locale, "marketing.eyebrow")}</p>
+        <h2 class="mt-3 max-w-sm font-display text-3xl font-extrabold leading-tight tracking-tight text-white" data-i18n="auth.signup.panel.title">
+          {t(locale, "auth.signup.panel.title")}
         </h2>
         <ul class="mt-6 flex flex-col gap-3 text-sm text-ice/80">
-          <li class="flex items-start gap-2"><span class="text-orange">✓</span> Unlimited CVs and sections</li>
-          <li class="flex items-start gap-2"><span class="text-orange">✓</span> Autosave on every field</li>
-          <li class="flex items-start gap-2"><span class="text-orange">✓</span> Unlimited watermarked PDF exports</li>
+          <li class="flex items-start gap-2.5">
+            <span class="mt-0.5 text-orange">✓</span>
+            <span data-i18n="auth.signup.panel.benefit1">{t(locale, "auth.signup.panel.benefit1")}</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="mt-0.5 text-orange">✓</span>
+            <span data-i18n="auth.signup.panel.benefit2">{t(locale, "auth.signup.panel.benefit2")}</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="mt-0.5 text-orange">✓</span>
+            <span data-i18n="auth.signup.panel.benefit3">{t(locale, "auth.signup.panel.benefit3")}</span>
+          </li>
         </ul>
+
+        <dl class="mt-8 grid grid-cols-2 gap-8 border-t border-[var(--border-on-dark)] pt-5">
+          <div class="flex flex-col-reverse">
+            <dt class="mt-1.5 mono-label text-[9px] text-muted" data-i18n="marketing.hero.stat.templates">{t(locale, "marketing.hero.stat.templates")}</dt>
+            <dd class="font-mono text-2xl font-medium text-white">8</dd>
+          </div>
+          <div class="flex flex-col-reverse">
+            <dt class="mt-1.5 mono-label text-[9px] text-muted" data-i18n="marketing.hero.stat.objections">{t(locale, "marketing.hero.stat.objections")}</dt>
+            <dd class="font-mono text-2xl font-medium text-white">6</dd>
+          </div>
+        </dl>
       </div>
-      <p class="text-xs text-muted">CV Maker, by Flathire</p>
+
+      <p class="relative text-xs text-muted" data-i18n="auth.signup.subtitle">{t(locale, "auth.signup.subtitle")}</p>
     </div>
 
     <div class="flex items-center justify-center px-5 py-16 sm:px-8">

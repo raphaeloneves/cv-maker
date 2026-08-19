@@ -508,5 +508,9 @@
   "auth.signup.lastName": "Last name",
   "dashboard.card.rename": "Click to rename",
   "dashboard.card.download": "Download PDF",
-  "dashboard.card.downloading": "Downloading…"
+  "dashboard.card.downloading": "Downloading…",
+  "auth.signup.panel.title": "Build the CV that gets past the filter.",
+  "auth.signup.panel.benefit1": "The same framework used in real career coaching, built into every step.",
+  "auth.signup.panel.benefit2": "An honest CV Optimizer report: pass or reject, plus exactly what to fix.",
+  "auth.signup.panel.benefit3": "Unlimited CVs, real autosave, and a free export, always."
 }

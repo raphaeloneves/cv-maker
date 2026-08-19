@@ -508,5 +508,9 @@
   "auth.signup.lastName": "Apelido",
   "dashboard.card.rename": "Clique para renomear",
   "dashboard.card.download": "Descarregar PDF",
-  "dashboard.card.downloading": "A descarregar…"
+  "dashboard.card.downloading": "A descarregar…",
+  "auth.signup.panel.title": "Construa o CV que passa pelo filtro.",
+  "auth.signup.panel.benefit1": "O mesmo método utilizado em coaching de carreira real, integrado em cada passo.",
+  "auth.signup.panel.benefit2": "Um relatório honesto do Otimizador de CV: aprovado ou reprovado, mais o que corrigir.",
+  "auth.signup.panel.benefit3": "CVs ilimitados, gravação automática real, e uma exportação grátis, sempre."
 }
