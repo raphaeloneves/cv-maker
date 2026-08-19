@@ -94,7 +94,7 @@ export function PersonalInfoForm({ cvId }: PersonalInfoFormProps) {
 
   if (isLoading || !form) {
     return (
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-5xl">
         <p className="mono-label text-xs text-text-muted">{t(locale, "common.loading")}</p>
       </div>
     );
@@ -103,7 +103,7 @@ export function PersonalInfoForm({ cvId }: PersonalInfoFormProps) {
   const gender = (form.gender ?? "") as Gender | "";
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="mx-auto max-w-5xl">
       <Card className="p-6 sm:p-8">
         {/* Header row — title/subtitle carry the page's own weight; the CV
          * language picker and save indicator are secondary, so they're
@@ -126,9 +126,12 @@ export function PersonalInfoForm({ cvId }: PersonalInfoFormProps) {
           </div>
         </div>
 
-        {/* Core/required block — photo sits beside the name+contact fields
-         * (not floating alone above them) so this reads as one identity
-         * block, matching how a photo sits next to a name on the CV itself. */}
+        {/* Core/always-visible block — photo sits beside the name+contact
+         * fields (not floating alone above them) so this reads as one
+         * identity block, matching how a photo sits next to a name on the CV
+         * itself. LinkedIn and a personal site live here too, unrequired but
+         * never hidden behind "Additional information" — for most job
+         * searches today they're as core to a CV's header as the email is. */}
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
           <PhotoField
             cvId={cvId}
@@ -167,6 +170,18 @@ export function PersonalInfoForm({ cvId }: PersonalInfoFormProps) {
                 error={touched.email ? requiredErrors.email : null}
               />
             </div>
+            <Input
+              id="linkedin"
+              label={t(locale, "personalInfo.linkedin")}
+              value={form.linkedin ?? ""}
+              onChange={(e) => update({ linkedin: e.target.value })}
+            />
+            <Input
+              id="website"
+              label={t(locale, "personalInfo.website")}
+              value={form.website ?? ""}
+              onChange={(e) => update({ website: e.target.value })}
+            />
           </div>
         </div>
 
@@ -324,21 +339,6 @@ export function PersonalInfoForm({ cvId }: PersonalInfoFormProps) {
                     label={t(locale, "personalInfo.drivingLicence")}
                     value={form.drivingLicence ?? ""}
                     onChange={(e) => update({ drivingLicence: e.target.value })}
-                  />
-                </FormSection>
-
-                <FormSection title={t(locale, "personalInfo.section.online")}>
-                  <Input
-                    id="linkedin"
-                    label={t(locale, "personalInfo.linkedin")}
-                    value={form.linkedin ?? ""}
-                    onChange={(e) => update({ linkedin: e.target.value })}
-                  />
-                  <Input
-                    id="website"
-                    label={t(locale, "personalInfo.website")}
-                    value={form.website ?? ""}
-                    onChange={(e) => update({ website: e.target.value })}
                   />
                 </FormSection>
               </div>
