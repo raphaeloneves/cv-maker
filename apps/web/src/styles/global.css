@@ -16,6 +16,11 @@ body {
   background: var(--surface-page);
   color: var(--text-body);
   font-family: var(--font-body);
+  /* Marketing sections lean on decorative blobs and floating accent pills
+   * with negative-offset positioning; this is a cheap backstop so a future
+   * one ever nudging past its section's own overflow-hidden can't put a
+   * horizontal scrollbar on the whole page. */
+  overflow-x: hidden;
 }
 
 h1, h2, h3, h4 {
@@ -58,6 +63,24 @@ h1, h2, h3, h4 {
   }
 }
 
+/* One-shot "stamped down" entrance for the CV Optimizer verdict stamp
+ * (ReportDetailView.tsx) — plays once as the report renders, not
+ * scroll-triggered like fade-up above: the verdict sits above the fold, so
+ * "on mount" already means "on view". */
+@keyframes stamp-in {
+  from { opacity: 0; transform: rotate(-16deg) scale(1.35); }
+  to { opacity: 1; transform: rotate(-6deg) scale(1); }
+}
+[data-animate="stamp"] {
+  animation: stamp-in 480ms var(--ease-standard) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-animate="stamp"] {
+    animation: none;
+    transform: rotate(-6deg);
+  }
+}
+
 /* Slow float loop for hero/marketing accent cards — brand doc: 3.5–5s loops. */
 @keyframes float-loop {
   0%, 100% { transform: translateY(0); }
@@ -68,4 +91,51 @@ h1, h2, h3, h4 {
 }
 @media (prefers-reduced-motion: reduce) {
   [data-animate="float"] { animation: none; }
+}
+
+/* Ambient drift for the marketing page's background glow blobs — much slower
+ * and larger-radius than float-loop (which is for small foreground pills),
+ * so dark sections read as alive rather than a single flat fill. */
+@keyframes blob-drift {
+  0%   { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(3%, -4%) scale(1.08); }
+  66%  { transform: translate(-3%, 3%) scale(0.96); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+[data-animate="drift"] {
+  animation: blob-drift 22s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-animate="drift"] { animation: none; }
+}
+
+/* Slow gradient sweep for the hero's accent headline phrase — a quiet
+ * shimmer, not a flashing effect (brand doc motion rule: sparse, purposeful). */
+@keyframes text-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.text-gradient-shimmer {
+  background: linear-gradient(90deg, var(--orange) 0%, var(--orange-warm) 50%, var(--orange) 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: text-shimmer 6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .text-gradient-shimmer { animation: none; background-position: 0% 50%; }
+}
+
+/* Draws the hero's score-ring on load, same idea as ScoreGauge.tsx's own
+ * stroke-dashoffset transition, just a fixed decorative value here since this
+ * is a static marketing mockup, not a live score. */
+@keyframes ring-draw {
+  from { stroke-dashoffset: 327; }
+}
+[data-animate="ring"] {
+  animation: ring-draw 1.1s 0.3s var(--ease-standard) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-animate="ring"] { animation: none; }
 }

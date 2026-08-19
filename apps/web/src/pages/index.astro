@@ -4,7 +4,18 @@ import { t } from "@/i18n";
 import { DEFAULT_LOCALE } from "@/lib/locale";
 const locale = DEFAULT_LOCALE;
 
-const features = [
+// ---------------------------------------------------------------------------
+// Content-driving data. Kept as small local arrays/maps (same pattern the
+// previous version of this page used) rather than new components, since a
+// one-page marketing site is a single reading experience, not a set of
+// reusable domain widgets.
+// ---------------------------------------------------------------------------
+
+const painRows = ["row1", "row2", "row3", "row4", "row5"] as const;
+
+const frameworkSteps = ["step1", "step2", "step3", "step4"] as const;
+
+const basicFeatures = [
   { key: "autosave", icon: "save" },
   { key: "templates", icon: "layout" },
   { key: "inclusive", icon: "user" },
@@ -13,6 +24,38 @@ const features = [
   { key: "export", icon: "download" },
 ] as const;
 
+const freeFeatures = ["cvs", "sections", "templates", "export", "autosave"] as const;
+const proFeatures = ["everything", "optimizer", "guide", "watermark", "templates", "cancel"] as const;
+const faqs = ["q1", "q2", "q3", "q4"] as const;
+
+const testimonials = [
+  { key: "t1", name: "Marta Silva", initials: "MS", rating: 5, color: "#E8640C" },
+  { key: "t2", name: "Daniel Cross", initials: "DC", rating: 5, color: "#1B3A6B" },
+  { key: "t3", name: "Priya Nair", initials: "PN", rating: 4, color: "#F4A261" },
+  { key: "t4", name: "Helena Duarte", initials: "HD", rating: 5, color: "#243F72" },
+  { key: "t5", name: "Tomás Almeida", initials: "TA", rating: 5, color: "#B8500A" },
+  { key: "t6", name: "Rui Ferreira", initials: "RF", rating: 5, color: "#57647A" },
+  { key: "t7", name: "Beatriz Costa", initials: "BC", rating: 4, color: "#2E6E6A" },
+  { key: "t8", name: "Nuno Pinto", initials: "NP", rating: 5, color: "#7A2E1D" },
+  { key: "t9", name: "Sofia Ramos", initials: "SR", rating: 5, color: "#12403F" },
+] as const;
+
+// Grouped into full-width carousel "pages" rather than one dot per card —
+// with 2-3 cards peeking into view at once at wider viewports, individual
+// per-card scroll targets ran out of scrollable width near the end (the
+// browser just clamped, so the last couple of dots silently did nothing).
+// A page is always exactly one viewport wide, so there's always exactly one
+// scroll position per dot, at every breakpoint. Three even pages of three.
+const testimonialPages = [
+  [testimonials[0], testimonials[1], testimonials[2]],
+  [testimonials[3], testimonials[4], testimonials[5]],
+  [testimonials[6], testimonials[7], testimonials[8]],
+] as const;
+
+function stars(rating: number) {
+  return Array.from({ length: 5 }, (_, i) => i < rating);
+}
+
 const ICONS: Record<string, string> = {
   save: '<path d="M5 4h11l3 3v13H5V4Z"/><path d="M8 4v5h8V4"/><path d="M8 20v-6h8v6"/>',
   layout: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16"/><path d="M10 10v10"/>',
@@ -20,31 +63,66 @@ const ICONS: Record<string, string> = {
   globe: '<circle cx="12" cy="12" r="8"/><path d="M4 12h16"/><path d="M12 4c2.5 2.5 2.5 13.5 0 16M12 4c-2.5 2.5-2.5 13.5 0 16"/>',
   route: '<circle cx="6" cy="6" r="2.2"/><circle cx="18" cy="18" r="2.2"/><path d="M6 8.2V13a4 4 0 0 0 4 4h3.5"/>',
   download: '<path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 19h14"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>',
+  arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
 };
+
+function icon(name: string, color = "var(--orange)", size = 20) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
+}
+
+const STAR_PATH =
+  "M12 2.5l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.8-6.2 3.8 1.6-7-5.4-4.7 7.1-.6L12 2.5Z";
+function starIcon(filled: boolean) {
+  const color = filled ? "var(--orange-warm)" : "#d8dee8";
+  return `<svg width="16" height="16" viewBox="0 0 24 24" fill="${filled ? color : "none"}" stroke="${color}" stroke-width="1.5" aria-hidden="true"><path d="${STAR_PATH}"/></svg>`;
+}
 ---
 
 <BaseLayout
-  title="Build a CV that gets you hired"
-  description="A fast, guided CV builder with six polished templates, real autosave, and a free watermarked export for everyone."
+  title="Turn your CV into an interview magnet"
+  description="Build your CV with the same framework career coaches use, then get an honest AI report scoring it against six real recruiter objections."
   surface="dark"
 >
   <!-- ============================= HERO ============================= -->
-  <section class="relative overflow-hidden px-5 pb-24 pt-16 sm:px-8 sm:pb-32 sm:pt-20">
+  <section id="hero" class="relative overflow-hidden px-5 pb-24 pt-16 sm:px-8 sm:pb-32 sm:pt-20">
     <div
-      class="pointer-events-none absolute -right-32 -top-32 h-[520px] w-[520px] rounded-full opacity-25 blur-3xl"
+      class="pointer-events-none absolute inset-0 opacity-[0.07]"
+      style="background-image: radial-gradient(var(--ice) 1px, transparent 1px); background-size: 22px 22px;"
+      aria-hidden="true"
+    >
+    </div>
+    <div
+      data-animate="drift"
+      class="pointer-events-none absolute -right-32 -top-32 h-[560px] w-[560px] rounded-full opacity-25 blur-3xl"
       style="background: radial-gradient(circle, var(--orange) 0%, transparent 70%);"
       aria-hidden="true"
     >
     </div>
+    <div
+      data-animate="drift"
+      style="animation-delay: -7s; background: radial-gradient(circle, var(--orange-warm) 0%, transparent 70%);"
+      class="pointer-events-none absolute -bottom-40 -left-24 h-[420px] w-[420px] rounded-full opacity-20 blur-3xl"
+      aria-hidden="true"
+    >
+    </div>
+    <div
+      data-animate="drift"
+      style="animation-delay: -14s; background: radial-gradient(circle, var(--navy-light) 0%, transparent 70%);"
+      class="pointer-events-none absolute left-1/3 top-1/4 h-[380px] w-[380px] rounded-full opacity-40 blur-3xl"
+      aria-hidden="true"
+    >
+    </div>
 
-    <div class="relative mx-auto grid max-w-7xl items-center gap-16 lg:grid-cols-[1.05fr_0.95fr]">
-      <div>
+    <div class="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 lg:grid-cols-[1.05fr_0.95fr]">
+      <div class="min-w-0">
         <p class="eyebrow text-xs text-orange" data-i18n="marketing.eyebrow">{t(locale, "marketing.eyebrow")}</p>
-        <h1
-          class="mt-4 max-w-xl font-display text-4xl font-extrabold leading-[1.05] tracking-tighter text-white sm:text-5xl lg:text-[3.4rem]"
-          data-i18n="marketing.hero.title"
-        >
-          {t(locale, "marketing.hero.title")}
+        <h1 class="mt-4 max-w-xl font-display text-4xl font-extrabold leading-[1.05] tracking-tighter text-white sm:text-5xl lg:text-[3.4rem]">
+          <span data-i18n="marketing.hero.title.prefix">{t(locale, "marketing.hero.title.prefix")}</span>{" "}
+          <span class="text-gradient-shimmer" data-i18n="marketing.hero.title.accent">
+            {t(locale, "marketing.hero.title.accent")}
+          </span>
         </h1>
         <p class="mt-5 max-w-md text-base leading-relaxed text-ice/75" data-i18n="marketing.hero.subtitle">
           {t(locale, "marketing.hero.subtitle")}
@@ -54,130 +132,342 @@ const ICONS: Record<string, string> = {
           <a
             href="/signup"
             data-i18n="marketing.hero.cta.primary"
-            class="inline-flex items-center rounded-md bg-orange px-6 py-3 text-sm font-semibold text-white transition-colors duration-fast ease-standard hover:bg-accent-hover"
+            class="inline-flex items-center rounded-md bg-orange px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-orange/0 transition-all duration-standard ease-standard hover:-translate-y-0.5 hover:bg-accent-hover hover:shadow-orange/30"
           >
             {t(locale, "marketing.hero.cta.primary")}
           </a>
           <a
-            href="/pricing"
+            href="#framework"
             data-i18n="marketing.hero.cta.secondary"
-            class="inline-flex items-center rounded-md border border-[var(--border-on-dark)] px-6 py-3 text-sm font-semibold text-ice transition-colors duration-fast ease-standard hover:bg-navy-mid"
+            class="inline-flex items-center rounded-md border border-[var(--border-on-dark)] px-6 py-3 text-sm font-semibold text-ice transition-all duration-standard ease-standard hover:-translate-y-0.5 hover:border-orange/40 hover:bg-navy-mid"
           >
             {t(locale, "marketing.hero.cta.secondary")}
           </a>
         </div>
 
-        <dl class="mt-12 grid max-w-md grid-cols-3 gap-6 border-t border-[var(--border-on-dark)] pt-6">
-          <div>
+        <dl class="mt-12 grid max-w-md grid-cols-3 gap-3 border-t border-[var(--border-on-dark)] pt-6 sm:gap-6">
+          <div class="min-w-0" data-animate="fade-up" style="transition-delay: 60ms">
             <dt class="mono-label text-[10px] text-muted" data-i18n="marketing.hero.stat.templates">
               {t(locale, "marketing.hero.stat.templates")}
             </dt>
-            <dd class="mt-1 font-mono text-2xl font-medium text-white">6</dd>
+            <dd class="mt-1 font-mono text-2xl font-medium text-white">8</dd>
           </div>
-          <div>
+          <div class="min-w-0" data-animate="fade-up" style="transition-delay: 120ms">
             <dt class="mono-label text-[10px] text-muted" data-i18n="marketing.hero.stat.languages">
               {t(locale, "marketing.hero.stat.languages")}
             </dt>
             <dd class="mt-1 font-mono text-2xl font-medium text-white">2</dd>
           </div>
-          <div>
-            <dt class="mono-label text-[10px] text-muted" data-i18n="marketing.hero.stat.free">
-              {t(locale, "marketing.hero.stat.free")}
+          <div class="min-w-0" data-animate="fade-up" style="transition-delay: 180ms">
+            <dt class="mono-label text-[10px] text-muted" data-i18n="marketing.hero.stat.objections">
+              {t(locale, "marketing.hero.stat.objections")}
             </dt>
-            <dd class="mt-1 font-mono text-2xl font-medium text-white">€0</dd>
+            <dd class="mt-1 font-mono text-2xl font-medium text-white">6</dd>
           </div>
         </dl>
       </div>
 
-      <!-- Signature element: a miniature live CV mockup built from the
-           product's own design tokens (not stock illustration) — a floating
-           doc with a "Saved" pill nodding at the real autosave feature. -->
-      <div class="relative mx-auto w-full max-w-sm" data-animate="fade-up">
-        <div
-          data-animate="float"
-          class="relative rounded-lg bg-white p-5 shadow-2xl shadow-black/40"
-          style="transform: rotate(-2.5deg);"
-        >
-          <div class="flex items-center gap-3 border-b border-[var(--border-on-light)] pb-3">
-            <div class="h-11 w-11 shrink-0 rounded-full bg-navy-mid/15"></div>
-            <div class="flex-1">
-              <div class="h-2.5 w-28 rounded-full bg-navy-deep/80"></div>
-              <div class="mt-1.5 h-2 w-20 rounded-full bg-orange/60"></div>
-            </div>
+      <!-- Signature element: an animated frame around a screenshot of the
+           actual CV Optimizer report, with the real product's verdict stamp
+           and score gauge (see VerdictStamp.tsx / ScoreGauge.tsx) recreated
+           floating on top of it. The screenshot itself is a placeholder —
+           see the instructions in the comment below the frame. -->
+      <div class="relative mx-auto w-full min-w-0 max-w-md" data-animate="fade-up">
+        <div data-animate="float" class="relative rounded-lg bg-white p-2.5 shadow-2xl shadow-black/40" style="transform: rotate(-1.5deg);">
+          <div class="flex items-center gap-1.5 px-2 pb-2 pt-1">
+            <span class="h-2.5 w-2.5 rounded-full bg-[#e0e4ea]"></span>
+            <span class="h-2.5 w-2.5 rounded-full bg-[#e0e4ea]"></span>
+            <span class="h-2.5 w-2.5 rounded-full bg-[#e0e4ea]"></span>
+            <span class="mono-label ml-2 text-[9px] text-[#9aa5ba]" data-i18n="marketing.hero.screenshot.badge">
+              {t(locale, "marketing.hero.screenshot.badge")}
+            </span>
           </div>
-          <div class="mt-4 grid grid-cols-[0.8fr_1.4fr] gap-4">
-            <div class="flex flex-col gap-2.5">
-              <div class="h-1.5 w-14 rounded-full bg-navy-deep/40"></div>
-              <div class="h-1.5 w-full rounded-full bg-surface-sunken"></div>
-              <div class="h-1.5 w-4/5 rounded-full bg-surface-sunken"></div>
-              <div class="mt-2 h-1.5 w-16 rounded-full bg-navy-deep/40"></div>
-              <div class="h-1.5 w-full rounded-full bg-surface-sunken"></div>
-              <div class="h-1.5 w-3/5 rounded-full bg-surface-sunken"></div>
-            </div>
-            <div class="flex flex-col gap-2.5">
-              <div class="h-1.5 w-24 rounded-full bg-navy-deep/40"></div>
-              <div class="h-1.5 w-full rounded-full bg-surface-sunken"></div>
-              <div class="h-1.5 w-full rounded-full bg-surface-sunken"></div>
-              <div class="h-1.5 w-2/3 rounded-full bg-surface-sunken"></div>
-              <div class="mt-2 h-1.5 w-24 rounded-full bg-navy-deep/40"></div>
-              <div class="h-1.5 w-full rounded-full bg-surface-sunken"></div>
-              <div class="h-1.5 w-4/5 rounded-full bg-surface-sunken"></div>
-            </div>
+          <!--
+            SCREENSHOT PLACEHOLDER — replace this div with:
+              <img src="/images/marketing/optimizer-report-hero.png" alt="" class="aspect-[4/3] w-full rounded-b-md object-cover object-top" />
+            Capture: open a completed CV Optimizer report (/optimizer/[id]),
+            screenshot the top of the page (verdict stamp + score gauge +
+            role title), landscape crop, ~1200x900px, save as
+            optimizer-report-hero.png in apps/web/public/images/marketing/.
+          -->
+          <div
+            class="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-b-md border border-dashed border-[var(--border-on-light)]"
+            style="background-image: repeating-linear-gradient(135deg, var(--surface-sunken) 0, var(--surface-sunken) 1px, transparent 1px, transparent 12px); background-color: var(--surface-page);"
+          >
+            <span set:html={icon("layout", "#9aa5ba", 28)} />
+            <p class="mono-label text-center text-[10px] text-[#9aa5ba]">Screenshot placeholder<br />optimizer-report-hero.png</p>
           </div>
         </div>
 
         <div
           data-animate="float"
-          style="animation-delay: -1.8s; transform: rotate(3deg);"
-          class="absolute -bottom-5 -left-8 flex items-center gap-2 rounded-pill bg-navy-mid px-3.5 py-2 shadow-lg"
+          style="animation-delay: -1.8s; transform: rotate(-6deg);"
+          class="absolute -bottom-6 -left-8 inline-block rounded-sm border-4 border-success p-1.5 shadow-lg"
         >
-          <span class="h-1.5 w-1.5 rounded-full bg-success"></span>
-          <span class="mono-label text-[10px] text-ice">{t(locale, "save.saved")}</span>
+          <div class="flex items-center gap-2 rounded-[3px] border-2 border-success bg-navy-deep px-4 py-1.5">
+            <span set:html={icon("check", "var(--success)", 18)} />
+            <span class="font-display text-lg font-extrabold uppercase tracking-widest text-success">
+              {t(locale, "optimizer.detail.verdict.pass")}
+            </span>
+          </div>
         </div>
 
         <div
           data-animate="float"
-          style="animation-delay: -3s; transform: rotate(-4deg);"
-          class="absolute -right-6 -top-5 flex gap-1.5 rounded-pill bg-navy-mid px-2.5 py-2 shadow-lg"
+          style="animation-delay: -3s;"
+          class="absolute -right-5 -top-6 flex flex-col items-center gap-1 rounded-lg bg-navy-mid px-4 py-3 shadow-lg"
         >
-          <span class="h-4 w-4 rounded-full" style="background:#E8640C"></span>
-          <span class="h-4 w-4 rounded-full" style="background:#1B3A6B"></span>
-          <span class="h-4 w-4 rounded-full" style="background:#F4A261"></span>
+          <div class="relative flex h-16 w-16 items-center justify-center">
+            <svg viewBox="0 0 120 120" width="64" height="64" class="-rotate-90" aria-hidden="true">
+              <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="10" />
+              <circle
+                data-animate="ring"
+                cx="60"
+                cy="60"
+                r="52"
+                fill="none"
+                stroke="var(--success)"
+                stroke-width="10"
+                stroke-linecap="round"
+                stroke-dasharray="326.73"
+                stroke-dashoffset="26.14"
+              />
+            </svg>
+            <span class="absolute font-display text-lg font-extrabold text-white">92</span>
+          </div>
+          <span class="mono-label text-[8px] text-ice/70" data-i18n="optimizer.detail.score.label">
+            {t(locale, "optimizer.detail.score.label")}
+          </span>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ======================= TRUST / MANIFESTO ======================= -->
-  <section data-surface="light" class="bg-surface-page px-5 py-16 sm:px-8 sm:py-20" data-animate="fade-up">
-    <div class="mx-auto max-w-3xl text-center">
-      <p class="eyebrow text-xs text-orange" data-i18n="marketing.trust.eyebrow">{t(locale, "marketing.trust.eyebrow")}</p>
-      <p
-        class="mt-4 font-display text-2xl font-bold leading-snug tracking-tight text-heading sm:text-3xl"
-        data-i18n="marketing.trust.title"
-      >
-        {t(locale, "marketing.trust.title")}
+  <!-- ============================= PAIN ============================= -->
+  <section data-surface="light" class="relative overflow-hidden bg-surface-page px-5 py-20 sm:px-8 sm:py-28">
+    <div class="mx-auto max-w-3xl text-center" data-animate="fade-up">
+      <p class="eyebrow text-xs text-orange" data-i18n="marketing.pain.eyebrow">{t(locale, "marketing.pain.eyebrow")}</p>
+      <h2 class="mt-4 font-display text-3xl font-extrabold leading-snug tracking-tight text-heading sm:text-4xl" data-i18n="marketing.pain.title">
+        {t(locale, "marketing.pain.title")}
+      </h2>
+      <p class="mx-auto mt-4 max-w-xl text-base leading-relaxed text-text-muted" data-i18n="marketing.pain.subtitle">
+        {t(locale, "marketing.pain.subtitle")}
       </p>
+    </div>
+
+    <div class="mx-auto mt-14 max-w-4xl" data-animate="fade-up">
+      <div class="mb-3 hidden grid-cols-[1fr_44px_1fr] gap-3 sm:grid sm:gap-4">
+        <div class="flex items-center gap-2 rounded-md bg-surface-sunken px-4 py-2">
+          <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-[#9aa5ba]" />
+          <p class="mono-label text-[10px] text-text-muted" data-i18n="marketing.pain.myth.label">{t(locale, "marketing.pain.myth.label")}</p>
+        </div>
+        <span></span>
+        <div class="flex items-center gap-2 rounded-md bg-navy-deep px-4 py-2">
+          <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-orange" />
+          <p class="mono-label text-[10px] text-orange-warm" data-i18n="marketing.pain.reality.label">{t(locale, "marketing.pain.reality.label")}</p>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-3">
+        {
+          painRows.map((rowKey, i) => (
+            <div
+              data-animate="fade-up"
+              style={`transition-delay:${i * 80}ms`}
+              class="group grid grid-cols-1 gap-2 sm:grid-cols-[1fr_44px_1fr] sm:items-stretch sm:gap-4"
+            >
+              <div class="flex items-start gap-3 rounded-lg border border-[var(--border-on-light)] bg-surface-sunken/70 p-4">
+                <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white" set:html={icon("x", "#9aa5ba", 14)} />
+                <span class="text-sm text-text-muted line-through decoration-[#b8bfd1]" data-i18n={`marketing.pain.${rowKey}.myth`}>
+                  {t(locale, `marketing.pain.${rowKey}.myth`)}
+                </span>
+              </div>
+
+              <div class="hidden items-center justify-center sm:flex">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-orange/25 bg-surface-card text-orange shadow-sm transition-transform duration-standard ease-standard group-hover:scale-110 group-hover:border-orange/50">
+                  <span set:html={icon("arrow", "var(--orange)", 16)} />
+                </span>
+              </div>
+              <div class="sm:hidden" set:html={icon("arrow", "var(--orange)", 16)} style="transform: rotate(90deg); margin-left: 1.25rem;" />
+
+              <div class="flex items-start gap-3 rounded-lg border-2 border-orange/15 bg-surface-card p-4 shadow-sm transition-all duration-standard ease-standard group-hover:border-orange/40 group-hover:shadow-md">
+                <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange/10 text-orange" set:html={icon("check", "var(--orange)", 14)} />
+                <span class="text-sm font-semibold text-heading" data-i18n={`marketing.pain.${rowKey}.reality`}>
+                  {t(locale, `marketing.pain.${rowKey}.reality`)}
+                </span>
+              </div>
+            </div>
+          ))
+        }
+      </div>
     </div>
   </section>
 
-  <!-- ============================ FEATURES ============================ -->
-  <section data-surface="light" class="bg-surface-page px-5 pb-20 sm:px-8 sm:pb-28">
-    <div class="mx-auto max-w-7xl">
+  <!-- ============================ FRAMEWORK ============================ -->
+  <section id="framework" class="scroll-mt-16 relative overflow-hidden px-5 py-20 sm:px-8 sm:py-28">
+    <div
+      data-animate="drift"
+      style="animation-delay: -4s; background: radial-gradient(circle, var(--orange) 0%, transparent 70%);"
+      class="pointer-events-none absolute -left-40 top-10 h-[420px] w-[420px] rounded-full opacity-[0.12] blur-3xl"
+      aria-hidden="true"
+    >
+    </div>
+    <div
+      data-animate="drift"
+      style="animation-delay: -11s; background: radial-gradient(circle, var(--orange-warm) 0%, transparent 70%);"
+      class="pointer-events-none absolute -right-32 bottom-0 h-[380px] w-[380px] rounded-full opacity-[0.1] blur-3xl"
+      aria-hidden="true"
+    >
+    </div>
+    <div class="relative mx-auto max-w-2xl text-center" data-animate="fade-up">
+      <p class="eyebrow text-xs text-orange" data-i18n="marketing.framework.eyebrow">{t(locale, "marketing.framework.eyebrow")}</p>
+      <h2 class="mt-3 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl" data-i18n="marketing.framework.title">
+        {t(locale, "marketing.framework.title")}
+      </h2>
+      <p class="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-ice/75" data-i18n="marketing.framework.subtitle">
+        {t(locale, "marketing.framework.subtitle")}
+      </p>
+    </div>
+
+    <div class="relative mx-auto mt-16 max-w-6xl">
+      <div class="pointer-events-none absolute left-0 right-0 top-6 hidden h-px bg-[var(--border-on-dark)] lg:block" aria-hidden="true"></div>
+      <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+        {
+          frameworkSteps.map((stepKey, i) => (
+            <div data-animate="fade-up" style={`transition-delay:${i * 110}ms`} class="group relative flex flex-col gap-3">
+              <div class="relative z-10 flex h-12 w-12 items-center justify-center rounded-full border-2 border-orange bg-navy-deep font-display text-lg font-extrabold text-orange transition-transform duration-standard ease-standard group-hover:scale-110 group-hover:bg-orange group-hover:text-white">
+                {String(i + 1).padStart(2, "0")}
+              </div>
+              <h3 class="font-display text-lg font-bold text-white" data-i18n={`marketing.framework.${stepKey}.title`}>
+                {t(locale, `marketing.framework.${stepKey}.title`)}
+              </h3>
+              <p class="text-sm leading-relaxed text-ice/70" data-i18n={`marketing.framework.${stepKey}.body`}>
+                {t(locale, `marketing.framework.${stepKey}.body`)}
+              </p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+
+    <div class="mt-14 flex justify-center" data-animate="fade-up">
+      <a
+        href="/signup"
+        data-i18n="marketing.framework.cta"
+        class="inline-flex items-center rounded-md bg-orange px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-orange/0 transition-all duration-standard ease-standard hover:-translate-y-0.5 hover:bg-accent-hover hover:shadow-orange/30"
+      >
+        {t(locale, "marketing.framework.cta")}
+      </a>
+    </div>
+  </section>
+
+  <!-- ============================ OPTIMIZER ============================ -->
+  <section id="optimizer" data-surface="light" class="scroll-mt-16 relative overflow-hidden bg-surface-page px-5 py-20 sm:px-8 sm:py-28">
+    <div class="relative mx-auto max-w-2xl text-center" data-animate="fade-up">
+      <p class="eyebrow text-xs text-orange" data-i18n="marketing.optimizer.eyebrow">{t(locale, "marketing.optimizer.eyebrow")}</p>
+      <h2 class="mt-3 font-display text-3xl font-extrabold tracking-tight text-heading sm:text-4xl" data-i18n="marketing.optimizer.title">
+        {t(locale, "marketing.optimizer.title")}
+      </h2>
+      <p class="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-text-muted" data-i18n="marketing.optimizer.subtitle">
+        {t(locale, "marketing.optimizer.subtitle")}
+      </p>
+    </div>
+
+    <!-- Feature row: verdict pitch + report screenshot -->
+    <div class="mx-auto mt-16 grid max-w-6xl items-center gap-12 lg:grid-cols-2">
+      <div data-animate="fade-up" class="order-2 lg:order-1">
+        <span class="flex h-11 w-11 items-center justify-center rounded-md border border-[var(--border-on-light)]" set:html={icon("check")} />
+        <h3 class="mt-4 font-display text-2xl font-bold text-heading" data-i18n="marketing.optimizer.verdict.title">
+          {t(locale, "marketing.optimizer.verdict.title")}
+        </h3>
+        <p class="mt-3 text-sm leading-relaxed text-text-muted" data-i18n="marketing.optimizer.verdict.body">
+          {t(locale, "marketing.optimizer.verdict.body")}
+        </p>
+      </div>
+      <div data-animate="fade-up" class="order-1 lg:order-2">
+        <div class="rounded-lg border border-[var(--border-on-light)] bg-surface-card p-2.5 shadow-xl shadow-black/5 transition-transform duration-standard ease-standard hover:-translate-y-1">
+          <div class="mono-label flex items-center gap-1.5 px-2 pb-2 pt-1 text-[9px] text-text-muted" data-i18n="marketing.optimizer.screenshot.verdict.badge">
+            {t(locale, "marketing.optimizer.screenshot.verdict.badge")}
+          </div>
+          <!--
+            SCREENSHOT PLACEHOLDER — replace this div with:
+              <img src="/images/marketing/optimizer-report-verdict.png" alt="" class="aspect-[4/3] w-full rounded-b-md object-cover object-top" />
+            Capture: the verdict + score gauge section of a completed report
+            (/optimizer/[id]), ~1200x900px, save to
+            apps/web/public/images/marketing/optimizer-report-verdict.png.
+          -->
+          <div
+            class="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-b-md border border-dashed border-[var(--border-on-light)]"
+            style="background-image: repeating-linear-gradient(135deg, var(--surface-sunken) 0, var(--surface-sunken) 1px, transparent 1px, transparent 12px);"
+          >
+            <span set:html={icon("layout", "#9aa5ba", 28)} />
+            <p class="mono-label text-center text-[10px] text-[#9aa5ba]">Screenshot placeholder<br />optimizer-report-verdict.png</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Priority actions + rewrite -->
+    <div class="mx-auto mt-14 grid max-w-4xl gap-5 sm:grid-cols-2">
+      <div
+        data-animate="fade-up"
+        class="rounded-lg border border-[var(--border-on-light)] bg-surface-card p-6 transition-all duration-standard ease-standard hover:-translate-y-1 hover:shadow-lg"
+      >
+        <span class="flex h-11 w-11 items-center justify-center rounded-md border border-[var(--border-on-light)]" set:html={icon("route")} />
+        <h3 class="mt-4 font-display text-lg font-bold text-heading" data-i18n="marketing.optimizer.actions.title">
+          {t(locale, "marketing.optimizer.actions.title")}
+        </h3>
+        <p class="mt-2 text-sm leading-relaxed text-text-muted" data-i18n="marketing.optimizer.actions.body">
+          {t(locale, "marketing.optimizer.actions.body")}
+        </p>
+      </div>
+      <div
+        data-animate="fade-up"
+        style="transition-delay: 90ms"
+        class="rounded-lg border border-orange/30 bg-surface-card p-6 transition-all duration-standard ease-standard hover:-translate-y-1 hover:shadow-lg"
+      >
+        <span class="flex h-11 w-11 items-center justify-center rounded-md border border-[var(--border-on-light)]" set:html={icon("layout")} />
+        <h3 class="mt-4 font-display text-lg font-bold text-heading" data-i18n="marketing.optimizer.rewrite.title">
+          {t(locale, "marketing.optimizer.rewrite.title")}
+        </h3>
+        <p class="mt-2 text-sm leading-relaxed text-text-muted" data-i18n="marketing.optimizer.rewrite.body">
+          {t(locale, "marketing.optimizer.rewrite.body")}
+        </p>
+      </div>
+    </div>
+
+    <div class="mt-14 flex justify-center" data-animate="fade-up">
+      <a
+        href="/signup"
+        data-i18n="marketing.optimizer.cta"
+        class="inline-flex items-center rounded-md bg-orange px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-orange/0 transition-all duration-standard ease-standard hover:-translate-y-0.5 hover:bg-accent-hover hover:shadow-orange/30"
+      >
+        {t(locale, "marketing.optimizer.cta")}
+      </a>
+    </div>
+  </section>
+
+  <!-- ========================= BASICS STRIP ========================= -->
+  <section data-surface="light" class="relative overflow-hidden bg-surface-page px-5 py-20 sm:px-8 sm:py-24">
+    <div class="relative mx-auto max-w-7xl">
       <div class="mx-auto max-w-2xl text-center" data-animate="fade-up">
         <p class="eyebrow text-xs text-orange" data-i18n="marketing.features.eyebrow">
           {t(locale, "marketing.features.eyebrow")}
         </p>
-        <h2 class="mt-3 font-display text-3xl font-extrabold tracking-tight text-heading" data-i18n="marketing.features.title">
+        <h2 class="mt-3 font-display text-2xl font-extrabold tracking-tight text-heading sm:text-3xl" data-i18n="marketing.features.title">
           {t(locale, "marketing.features.title")}
         </h2>
+        <p class="mt-2 text-sm text-text-muted" data-i18n="marketing.features.subtitle">{t(locale, "marketing.features.subtitle")}</p>
       </div>
 
-      <div class="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {
-          features.map((f) => (
-            <div data-animate="fade-up" class="flex flex-col gap-3">
-              <span class="flex h-11 w-11 items-center justify-center rounded-md border border-[var(--border-on-light)]" set:html={`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="1.6" aria-hidden="true">${ICONS[f.icon]}</svg>`} />
+          basicFeatures.map((f, i) => (
+            <div data-animate="fade-up" style={`transition-delay:${i * 60}ms`} class="group flex flex-col gap-3">
+              <span
+                class="flex h-11 w-11 items-center justify-center rounded-md border border-[var(--border-on-light)] transition-all duration-standard ease-standard group-hover:-translate-y-0.5 group-hover:border-orange/50 group-hover:bg-orange/5"
+                set:html={icon(f.icon)}
+              />
               <h3 class="font-display text-base font-bold text-heading" data-i18n={`marketing.features.${f.key}.title`}>
                 {t(locale, `marketing.features.${f.key}.title`)}
               </h3>
@@ -191,58 +481,272 @@ const ICONS: Record<string, string> = {
     </div>
   </section>
 
-  <!-- ============================ FREEMIUM ============================ -->
-  <section class="px-5 py-20 sm:px-8 sm:py-28">
-    <div class="mx-auto max-w-4xl text-center" data-animate="fade-up">
-      <p class="eyebrow text-xs text-orange" data-i18n="marketing.freemium.eyebrow">
-        {t(locale, "marketing.freemium.eyebrow")}
-      </p>
-      <h2 class="mt-3 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl" data-i18n="marketing.freemium.title">
-        {t(locale, "marketing.freemium.title")}
+  <!-- ============================= PRICING ============================= -->
+  <section id="pricing" class="scroll-mt-16 relative overflow-hidden px-5 py-20 sm:px-8 sm:py-28">
+    <div
+      data-animate="drift"
+      style="animation-delay: -6s; background: radial-gradient(circle, var(--orange) 0%, transparent 70%);"
+      class="pointer-events-none absolute -right-40 -top-20 h-[440px] w-[440px] rounded-full opacity-[0.12] blur-3xl"
+      aria-hidden="true"
+    >
+    </div>
+    <div class="relative mx-auto max-w-2xl text-center" data-animate="fade-up">
+      <p class="eyebrow text-xs text-orange" data-i18n="marketing.pricing.eyebrow">{t(locale, "marketing.pricing.eyebrow")}</p>
+      <h2 class="mt-3 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl" data-i18n="marketing.pricing.title">
+        {t(locale, "marketing.pricing.title")}
       </h2>
-      <p class="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-ice/75" data-i18n="marketing.freemium.body">
-        {t(locale, "marketing.freemium.body")}
+      <p class="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-ice/75" data-i18n="marketing.pricing.subtitle">
+        {t(locale, "marketing.pricing.subtitle")}
       </p>
     </div>
 
-    <div class="mx-auto mt-12 grid max-w-3xl gap-5 sm:grid-cols-2">
-      <div data-animate="fade-up" class="rounded-lg border border-[var(--border-on-dark)] bg-navy-mid p-6">
-        <p class="mono-label text-[11px] text-orange-warm" data-i18n="marketing.freemium.free.title">
-          {t(locale, "marketing.freemium.free.title")}
-        </p>
-        <p class="mt-3 text-sm leading-relaxed text-ice/80" data-i18n="marketing.freemium.free.body">
-          {t(locale, "marketing.freemium.free.body")}
-        </p>
+    <div class="relative mx-auto mt-14 grid max-w-4xl gap-6 sm:grid-cols-2">
+      <div
+        data-animate="fade-up"
+        class="flex flex-col rounded-lg border border-[var(--border-on-dark)] bg-navy-mid p-7 transition-all duration-standard ease-standard hover:-translate-y-1 hover:border-[var(--muted)]"
+      >
+        <p class="mono-label text-[11px] text-orange-warm" data-i18n="pricing.free.name">{t(locale, "pricing.free.name")}</p>
+        <div class="mt-3 flex items-baseline gap-1.5">
+          <span class="font-display text-4xl font-extrabold text-white" data-i18n="pricing.free.price">
+            {t(locale, "pricing.free.price")}
+          </span>
+          <span class="text-sm text-muted" data-i18n="pricing.free.period">{t(locale, "pricing.free.period")}</span>
+        </div>
+        <ul class="mt-6 flex flex-1 flex-col gap-3 text-sm text-ice/85">
+          {
+            freeFeatures.map((key) => (
+              <li class="flex items-start gap-2.5">
+                <span class="mt-0.5 text-success">✓</span>
+                <span data-i18n={`pricing.free.feature.${key}`}>{t(locale, `pricing.free.feature.${key}`)}</span>
+              </li>
+            ))
+          }
+        </ul>
+        <a
+          href="/signup"
+          data-i18n="pricing.free.cta"
+          class="mt-7 inline-flex items-center justify-center rounded-md border border-[var(--border-on-dark)] px-5 py-2.5 text-sm font-semibold text-ice transition-all duration-standard ease-standard hover:-translate-y-0.5 hover:bg-navy-light"
+        >
+          {t(locale, "pricing.free.cta")}
+        </a>
       </div>
-      <div data-animate="fade-up" class="rounded-lg border border-orange/40 bg-navy-mid p-6">
-        <p class="mono-label text-[11px] text-orange-warm" data-i18n="marketing.freemium.pro.title">
-          {t(locale, "marketing.freemium.pro.title")}
-        </p>
-        <p class="mt-3 text-sm leading-relaxed text-ice/80" data-i18n="marketing.freemium.pro.body">
-          {t(locale, "marketing.freemium.pro.body")}
-        </p>
-      </div>
-    </div>
 
-    <div class="mt-8 flex justify-center">
-      <a href="/pricing" class="text-sm font-semibold text-orange hover:text-accent-hover">
-        {t(locale, "nav.pricing")} →
-      </a>
+      <div
+        data-animate="fade-up"
+        style="transition-delay: 90ms"
+        class="relative flex flex-col rounded-lg border border-orange/50 bg-navy-mid p-7 shadow-2xl shadow-orange/10 transition-all duration-standard ease-standard hover:-translate-y-1.5 hover:border-orange hover:shadow-orange/20"
+      >
+        <span
+          data-i18n="pricing.pro.badge"
+          class="absolute -top-3 right-6 rounded-pill bg-orange px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-lg shadow-orange/40"
+        >
+          {t(locale, "pricing.pro.badge")}
+        </span>
+        <p class="mono-label text-[11px] text-orange-warm" data-i18n="pricing.pro.name">{t(locale, "pricing.pro.name")}</p>
+        <div class="mt-3 flex items-baseline gap-1.5">
+          <span class="font-display text-4xl font-extrabold text-white" data-i18n="pricing.pro.price">
+            {t(locale, "pricing.pro.price")}
+          </span>
+          <span class="text-sm text-muted" data-i18n="pricing.pro.period">{t(locale, "pricing.pro.period")}</span>
+        </div>
+        <ul class="mt-6 flex flex-1 flex-col gap-3 text-sm text-ice/85">
+          {
+            proFeatures.map((key) => (
+              <li class="flex items-start gap-2.5">
+                <span class="mt-0.5 text-orange">✓</span>
+                <span data-i18n={`pricing.pro.feature.${key}`}>{t(locale, `pricing.pro.feature.${key}`)}</span>
+              </li>
+            ))
+          }
+        </ul>
+        <a
+          href="/signup"
+          data-i18n="pricing.pro.cta"
+          class="mt-7 inline-flex items-center justify-center rounded-md bg-orange px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-orange/0 transition-all duration-standard ease-standard hover:-translate-y-0.5 hover:bg-accent-hover hover:shadow-orange/30"
+        >
+          {t(locale, "pricing.pro.cta")}
+        </a>
+      </div>
     </div>
   </section>
 
+  <!-- =========================== TESTIMONIALS =========================== -->
+  <section id="testimonials" data-surface="light" class="scroll-mt-16 relative overflow-hidden bg-surface-page px-5 py-20 sm:px-8 sm:py-28">
+    <div class="relative mx-auto max-w-2xl text-center" data-animate="fade-up">
+      <p class="eyebrow text-xs text-orange" data-i18n="marketing.testimonials.eyebrow">{t(locale, "marketing.testimonials.eyebrow")}</p>
+      <h2 class="mt-3 font-display text-3xl font-extrabold tracking-tight text-heading sm:text-4xl" data-i18n="marketing.testimonials.title">
+        {t(locale, "marketing.testimonials.title")}
+      </h2>
+      <p class="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-text-muted" data-i18n="marketing.testimonials.subtitle">
+        {t(locale, "marketing.testimonials.subtitle")}
+      </p>
+    </div>
+
+    <div class="relative mx-auto mt-14 max-w-6xl" data-animate="fade-up">
+      <div id="testimonial-track" class="flex snap-x snap-mandatory overflow-x-auto" style="scrollbar-width: none;">
+        {
+          testimonialPages.map((page) => (
+            <div class="w-full shrink-0 snap-center px-1">
+              <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {
+                  page.map((tItem) => (
+                    <div class="flex flex-col rounded-lg border border-[var(--border-on-light)] bg-surface-card p-7 shadow-sm transition-all duration-standard ease-standard hover:-translate-y-1 hover:border-orange/30 hover:shadow-lg">
+                      <div class="flex gap-0.5" aria-hidden="true">
+                        {stars(tItem.rating).map((filled) => (
+                          <span set:html={starIcon(filled)} />
+                        ))}
+                      </div>
+                      <p class="mt-4 text-sm leading-relaxed text-body" data-i18n={`marketing.testimonials.${tItem.key}.quote`}>
+                        “{t(locale, `marketing.testimonials.${tItem.key}.quote`)}”
+                      </p>
+                      <div class="mt-6 flex items-center gap-3 border-t border-[var(--border-on-light)] pt-5">
+                        {/* PHOTO PLACEHOLDER — replace this initials bubble with:
+                            <img src={`/images/marketing/testimonials/${tItem.key}.jpg`} alt="" class="h-11 w-11 rounded-full object-cover" />
+                            A square, real headshot of this person, ~200x200px. */}
+                        <div
+                          class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-display text-sm font-bold text-white"
+                          style={`background:${tItem.color}`}
+                        >
+                          {tItem.initials}
+                        </div>
+                        <div>
+                          <p class="text-sm font-semibold text-heading">{tItem.name}</p>
+                          <p class="text-xs text-text-muted" data-i18n={`marketing.testimonials.${tItem.key}.role`}>
+                            {t(locale, `marketing.testimonials.${tItem.key}.role`)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                }
+              </div>
+            </div>
+          ))
+        }
+      </div>
+
+      <div class="mt-6 flex items-center justify-center gap-4">
+        <button
+          type="button"
+          id="testimonial-prev"
+          aria-label="Previous testimonial"
+          class="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-on-light)] text-heading transition-colors duration-fast ease-standard hover:bg-surface-sunken"
+        >
+          <span set:html={icon("arrow", "currentColor", 16)} style="transform: rotate(180deg); display: inline-flex;" />
+        </button>
+        <div id="testimonial-dots" class="flex items-center gap-2">
+          {
+            testimonialPages.map((_, i) => (
+              <button
+                type="button"
+                data-index={i}
+                aria-label={`Go to testimonials page ${i + 1}`}
+                class="testimonial-dot h-1.5 w-1.5 rounded-full bg-[var(--border-on-light)] transition-transform duration-fast ease-standard"
+              />
+            ))
+          }
+        </div>
+        <button
+          type="button"
+          id="testimonial-next"
+          aria-label="Next testimonial"
+          class="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-on-light)] text-heading transition-colors duration-fast ease-standard hover:bg-surface-sunken"
+        >
+          <span set:html={icon("arrow", "currentColor", 16)} style="display: inline-flex;" />
+        </button>
+      </div>
+    </div>
+
+    <script>
+      const track = document.getElementById("testimonial-track");
+      const dots = Array.from(document.querySelectorAll<HTMLButtonElement>(".testimonial-dot"));
+      const prevBtn = document.getElementById("testimonial-prev");
+      const nextBtn = document.getElementById("testimonial-next");
+      if (track && dots.length) {
+        const cardWidth = () => track!.children[0]?.getBoundingClientRect().width ?? 0;
+        const gap = 24;
+
+        function activeIndex() {
+          const scrollLeft = track!.scrollLeft;
+          return Math.round(scrollLeft / (cardWidth() + gap));
+        }
+        function paintDots() {
+          const active = activeIndex();
+          dots.forEach((dot, i) => {
+            dot.classList.toggle("bg-orange", i === active);
+            dot.classList.toggle("scale-150", i === active);
+            dot.classList.toggle("bg-[var(--border-on-light)]", i !== active);
+          });
+        }
+        function scrollToIndex(i: number) {
+          const clamped = Math.max(0, Math.min(dots.length - 1, i));
+          track!.scrollTo({ left: clamped * (cardWidth() + gap), behavior: "smooth" });
+        }
+
+        dots.forEach((dot, i) => dot.addEventListener("click", () => scrollToIndex(i)));
+        prevBtn?.addEventListener("click", () => scrollToIndex(activeIndex() - 1));
+        nextBtn?.addEventListener("click", () => scrollToIndex(activeIndex() + 1));
+        track.addEventListener("scroll", () => window.requestAnimationFrame(paintDots), { passive: true });
+        paintDots();
+
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (!reduceMotion) {
+          let timer: ReturnType<typeof setInterval> | undefined;
+          const start = () => {
+            timer = setInterval(() => scrollToIndex((activeIndex() + 1) % dots.length), 6000);
+          };
+          const stop = () => timer && clearInterval(timer);
+          start();
+          track.addEventListener("pointerenter", stop);
+          track.addEventListener("pointerleave", start);
+          track.addEventListener("focusin", stop);
+          track.addEventListener("focusout", start);
+        }
+      }
+    </script>
+  </section>
+
   <!-- ============================= FINAL CTA ============================= -->
-  <section class="border-t border-[var(--border-on-dark)] px-5 py-20 text-center sm:px-8 sm:py-28" data-animate="fade-up">
-    <h2 class="mx-auto max-w-xl font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl" data-i18n="marketing.cta.title">
-      {t(locale, "marketing.cta.title")}
-    </h2>
-    <p class="mx-auto mt-3 max-w-md text-sm text-ice/70" data-i18n="marketing.cta.body">{t(locale, "marketing.cta.body")}</p>
-    <a
-      href="/signup"
-      data-i18n="marketing.cta.button"
-      class="mt-7 inline-flex items-center rounded-md bg-orange px-7 py-3.5 text-sm font-semibold text-white transition-colors duration-fast ease-standard hover:bg-accent-hover"
+  <section class="relative overflow-hidden border-t border-[var(--border-on-dark)] px-5 py-20 text-center sm:px-8 sm:py-28">
+    <div
+      data-animate="drift"
+      style="animation-delay: -18s; background: radial-gradient(circle, var(--orange) 0%, transparent 70%);"
+      class="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[420px] -translate-x-1/2 rounded-full opacity-[0.14] blur-3xl"
+      aria-hidden="true"
     >
-      {t(locale, "marketing.cta.button")}
-    </a>
+    </div>
+    <div class="relative" data-animate="fade-up">
+      <h2 class="mx-auto max-w-xl font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl" data-i18n="marketing.cta.title">
+        {t(locale, "marketing.cta.title")}
+      </h2>
+      <p class="mx-auto mt-3 max-w-md text-sm text-ice/70" data-i18n="marketing.cta.body">{t(locale, "marketing.cta.body")}</p>
+      <a
+        href="/signup"
+        data-i18n="marketing.cta.button"
+        class="mt-7 inline-flex items-center rounded-md bg-orange px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-orange/0 transition-all duration-standard ease-standard hover:-translate-y-0.5 hover:bg-accent-hover hover:shadow-orange/30"
+      >
+        {t(locale, "marketing.cta.button")}
+      </a>
+    </div>
+
+    <div class="relative mx-auto mt-20 max-w-2xl border-t border-[var(--border-on-dark)] pt-14 text-left">
+      <h3 class="text-center font-display text-xl font-extrabold tracking-tight text-white" data-i18n="pricing.faq.title">
+        {t(locale, "pricing.faq.title")}
+      </h3>
+      <div class="mt-8 flex flex-col divide-y divide-[var(--border-on-dark)]">
+        {
+          faqs.map((key) => (
+            <div class="group py-5 transition-colors duration-standard ease-standard hover:bg-orange/[0.03]">
+              <p class="font-semibold text-white transition-colors duration-standard ease-standard group-hover:text-orange-warm" data-i18n={`pricing.faq.${key}`}>
+                {t(locale, `pricing.faq.${key}`)}
+              </p>
+              <p class="mt-1.5 text-sm leading-relaxed text-ice/70" data-i18n={`pricing.faq.a${key.slice(1)}`}>
+                {t(locale, `pricing.faq.a${key.slice(1)}`)}
+              </p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
   </section>
 </BaseLayout>
