@@ -8,6 +8,8 @@ import { withCvId } from "@/lib/use-cv-id";
 import { useConfirmDialog } from "@/lib/use-confirm-dialog";
 import { RequireAuth } from "@/domains/auth/components/RequireAuth";
 import { listCvs, createCv, deleteCv } from "@/domains/cvs/api";
+import { DownloadCvButton } from "./DownloadCvButton.js";
+import { CvTitleEditor } from "./CvTitleEditor.js";
 
 function formatUpdated(iso: string, locale: string): string {
   try {
@@ -41,7 +43,7 @@ function DashboardBody() {
   });
 
   return (
-    <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
+    <div className="mx-auto max-w-[90rem] px-5 py-10 sm:px-8">
       {confirmDialog}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
@@ -80,24 +82,27 @@ function DashboardBody() {
       )}
 
       {cvsQuery.data && cvsQuery.data.length > 0 && (
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {cvsQuery.data.map((cv) => (
             <li key={cv.id}>
               <Card className="flex h-full flex-col justify-between gap-4 p-5">
                 <div>
                   <p className="mono-label text-[10px] text-orange">{cv.contentLanguage} · {cv.templateId}</p>
-                  <h3 className="mt-1 font-display text-lg font-bold text-heading">{cv.title}</h3>
+                  <CvTitleEditor cvId={cv.id} title={cv.title} locale={locale} />
                   <p className="mt-1 text-xs text-text-muted">
                     {t(locale, "dashboard.card.updated").replace("{date}", formatUpdated(cv.updatedAt, locale))}
                   </p>
                 </div>
-                <div className="flex items-center justify-between gap-2">
-                  <a
-                    href={withCvId("/builder/personal-info", cv.id)}
-                    className="text-sm font-semibold text-orange hover:text-accent-hover"
-                  >
-                    {t(locale, "dashboard.card.continue")} →
-                  </a>
+                <div className="flex items-end justify-between gap-2">
+                  <div className="flex flex-col items-start gap-2">
+                    <a
+                      href={withCvId("/builder/personal-info", cv.id)}
+                      className="text-sm font-semibold text-orange hover:text-accent-hover"
+                    >
+                      {t(locale, "dashboard.card.continue")} →
+                    </a>
+                    <DownloadCvButton cvId={cv.id} cvTitle={cv.title} locale={locale} />
+                  </div>
                   <button
                     type="button"
                     className={clsx(
