@@ -12,8 +12,9 @@ const year = new Date().getFullYear();
         <a href="/" class="flex items-baseline gap-1.5 font-display text-lg font-extrabold tracking-tight text-white">
           <span>CV</span><span class="text-orange">Maker</span>
         </a>
-        <p data-i18n="footer.tagline" class="mt-3 max-w-xs text-sm text-muted">
-          {t(locale, "footer.tagline")}
+        <p class="mt-3 max-w-xs text-sm text-muted">
+          <span data-i18n="footer.tagline.prefix">{t(locale, "footer.tagline.prefix")}</span>{" "}
+          <a href="https://flathire.agency" target="_blank" rel="noopener noreferrer" class="text-orange hover:text-accent-hover">Flathire</a>.
         </p>
       </div>
       <div>
@@ -33,8 +34,15 @@ const year = new Date().getFullYear();
       </div>
     </div>
     <div class="mt-10 flex flex-col gap-2 border-t border-[var(--border-on-dark)] pt-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
-      <p>© {year} Flathire. <span data-i18n="footer.rights">{t(locale, "footer.rights")}</span></p>
-      <p>CV Maker <span data-i18n="brand.by">{t(locale, "brand.by")}</span></p>
+      <p>
+        © {year}{" "}
+        <a href="https://flathire.agency" target="_blank" rel="noopener noreferrer" class="text-orange hover:text-accent-hover">Flathire</a>.{" "}
+        <span data-i18n="footer.rights">{t(locale, "footer.rights")}</span>
+      </p>
+      <p>
+        CV Maker by{" "}
+        <a href="https://flathire.agency" target="_blank" rel="noopener noreferrer" class="text-orange hover:text-accent-hover">Flathire</a>
+      </p>
     </div>
   </div>
 </footer>
