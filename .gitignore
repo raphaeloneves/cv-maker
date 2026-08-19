@@ -6,6 +6,8 @@ build/
 *.log
 .env
 .env.local
+.env.production
+.wrangler/
 .DS_Store
 coverage/
 .turbo/

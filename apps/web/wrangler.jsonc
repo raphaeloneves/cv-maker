@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Name of the Worker as it appears in the Cloudflare dashboard / *.workers.dev URL.
+  "name": "cv-maker-web",
+  "compatibility_date": "2026-08-19",
+
+  // apps/web is a static Astro build (output: "static") — no Worker code runs,
+  // Cloudflare just serves the built files from dist/ at the edge.
+  "assets": {
+    "directory": "./dist",
+    // Astro's static build already emits per-route index.html files, so plain
+    // 404s should fall through to Astro's own 404.astro page rather than SPA
+    // fallback (there's no client-side router to hand routing to).
+    "not_found_handling": "404-page"
+  }
+}

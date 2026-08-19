@@ -12,6 +12,7 @@
     "lint": "pnpm --recursive run lint",
     "test": "pnpm --recursive run test",
     "typecheck": "pnpm --recursive run typecheck",
+    "deploy:web": "pnpm --filter @cv-maker/web run deploy",
     "docker:up": "docker compose --env-file .env -f infra/docker-compose.yml up -d",
     "docker:down": "docker compose --env-file .env -f infra/docker-compose.yml down",
     "docker:logs": "docker compose --env-file .env -f infra/docker-compose.yml logs -f"
