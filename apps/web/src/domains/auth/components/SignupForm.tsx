@@ -13,6 +13,8 @@ import { signUp, CURRENT_TERMS_VERSION } from "@/domains/auth/api";
  * default and blocks submission until checked. */
 export function SignupForm() {
   const locale = getStoredLocale();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -40,6 +42,8 @@ export function SignupForm() {
     try {
       setStoredLocale(cvLocale);
       await signUp({
+        firstName,
+        lastName,
         email,
         password,
         locale: cvLocale,
@@ -61,6 +65,26 @@ export function SignupForm() {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Input
+          id="signup-first-name"
+          label={t(locale, "auth.signup.firstName")}
+          required
+          autoComplete="given-name"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          error={fieldErrors.firstName}
+        />
+        <Input
+          id="signup-last-name"
+          label={t(locale, "auth.signup.lastName")}
+          required
+          autoComplete="family-name"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+          error={fieldErrors.lastName}
+        />
+      </div>
       <Input
         id="signup-email"
         label={t(locale, "auth.signup.email")}
