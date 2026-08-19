@@ -25,6 +25,11 @@ export const templateDefinitionSchema = z.object({
   /** Premium templates are visible/browsable pre-payment but export watermarked
    * without an active subscription — see features/19's freemium decision. */
   premium: z.boolean(),
+  /** Drives the "Recommended" badge in the template gallery — a curated
+   * editorial call for conversion, not a computed/popularity-based flag.
+   * At most one or two templates should ever carry this at a time; omitted
+   * (falsy) is the default for every template. */
+  recommended: z.boolean().optional(),
 });
 export type TemplateDefinition = z.infer<typeof templateDefinitionSchema>;
 
@@ -45,6 +50,20 @@ export const TEMPLATE_DEFINITIONS: TemplateDefinition[] = [
     // glance in the template gallery, even though both share this swatch set.
     colorPalette: ["#E8640C", "#0A1628", "#4A5568", "#1B3A6B"],
     premium: false,
+  },
+  {
+    id: "porto",
+    name: "Porto",
+    // Single column, no sidebar, no photo, plain-text meters — a quiet,
+    // ATS-safe, one-column layout built for a long, detailed career history:
+    // every role gets full narrative treatment, nothing compressed. Listed
+    // first among the premium templates — it's the gallery's curated
+    // "Recommended" pick, and conversion is better when that pick is the
+    // first thing a browsing, not-yet-paying visitor sees.
+    layout: { columns: 1, sidebar: "none", meterStyle: "text", photoSupported: false },
+    colorPalette: ["#B8500A", "#1A1F29", "#57647A", "#0A1628"],
+    premium: true,
+    recommended: true,
   },
   {
     id: "kyoto",
@@ -72,6 +91,16 @@ export const TEMPLATE_DEFINITIONS: TemplateDefinition[] = [
     name: "Geneva",
     layout: { columns: 2, sidebar: "left", meterStyle: "dot", photoSupported: false },
     colorPalette: ["#12403F", "#1B3A6B", "#2E6E6A", "#0A1628"],
+    premium: true,
+  },
+  {
+    id: "faro",
+    name: "Faro",
+    // Porto's compact companion: same quiet, text-first design language,
+    // built to hold a full career on one page — the most recent role gets
+    // full detail, earlier roles condense to a single line each.
+    layout: { columns: 1, sidebar: "none", meterStyle: "text", photoSupported: false },
+    colorPalette: ["#B8500A", "#1A1F29", "#57647A", "#0A1628"],
     premium: true,
   },
 ];
