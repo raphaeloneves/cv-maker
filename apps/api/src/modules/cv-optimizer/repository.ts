@@ -44,7 +44,7 @@ export function findReportById(id: string) {
 export function listReportsForUser(userId: string) {
   return db.cvOptimizerReport.findMany({
     where: { userId },
-    orderBy: { createdAt: "desc" },
+    orderBy: { updatedAt: "desc" },
   });
 }
 
