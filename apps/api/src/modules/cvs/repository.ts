@@ -19,7 +19,7 @@ export function cvToDomain(cv: PrismaCv): Cv {
 }
 
 export function listCvsForUser(userId: string) {
-  return db.cv.findMany({ where: { userId }, orderBy: { createdAt: "asc" } });
+  return db.cv.findMany({ where: { userId }, orderBy: { updatedAt: "desc" } });
 }
 
 export function findCvById(cvId: string) {
