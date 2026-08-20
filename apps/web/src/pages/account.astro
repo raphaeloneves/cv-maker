@@ -3,6 +3,6 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import { AccountPage } from "@/domains/account/AccountPage";
 ---
 
-<BaseLayout title="Account" surface="light" showFooter={false} nav="app">
+<BaseLayout title="Account" surface="light" showFooter={false} nav="app" noindex>
   <AccountPage client:load />
 </BaseLayout>

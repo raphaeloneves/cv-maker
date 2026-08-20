@@ -6,7 +6,12 @@ import { DEFAULT_LOCALE } from "@/lib/locale";
 const locale = DEFAULT_LOCALE;
 ---
 
-<BaseLayout title="Log in" surface="light" showFooter={false}>
+<BaseLayout
+  title="Log in"
+  description="Log in to CV Maker to pick up your CVs, template picks, and CV Optimizer reports exactly where you left them."
+  surface="light"
+  showFooter={false}
+>
   <div class="grid min-h-[calc(100vh-57px)] lg:grid-cols-2">
     <div data-surface="dark" class="hidden flex-col justify-between bg-navy-deep px-12 py-14 lg:flex">
       <a href="/" class="flex items-baseline gap-1.5 font-display text-xl font-extrabold tracking-tight text-white">

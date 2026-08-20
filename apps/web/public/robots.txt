@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /account
+Disallow: /billing
+Disallow: /optimizer
+Disallow: /builder/
+
+Sitemap: https://cvmaker.flathire.agency/sitemap-index.xml

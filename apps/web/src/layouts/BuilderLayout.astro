@@ -20,7 +20,10 @@ interface Props {
 const { title, currentStep } = Astro.props;
 ---
 
-<BaseLayout title={title} surface="light" showFooter={false} nav="app">
+{/* Builder steps are only ever reached from behind <RequireAuth> and render
+ * no content for a logged-out crawler — always noindex, same reasoning as
+ * dashboard.astro/account.astro/etc. (see BaseLayout's `noindex` prop). */}
+<BaseLayout title={title} surface="light" showFooter={false} nav="app" noindex>
   <div class="min-h-[calc(100vh-57px)] px-5 py-8 sm:px-8 sm:py-10">
     <div class="mb-8 flex justify-center sm:mb-12">
       <BuilderStepper client:load currentStep={currentStep} />

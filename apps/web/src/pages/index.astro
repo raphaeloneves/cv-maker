@@ -78,12 +78,46 @@ function starIcon(filled: boolean) {
   const color = filled ? "var(--orange-warm)" : "#d8dee8";
   return `<svg width="16" height="16" viewBox="0 0 24 24" fill="${filled ? color : "none"}" stroke="${color}" stroke-width="1.5" aria-hidden="true"><path d="${STAR_PATH}"/></svg>`;
 }
+
+// ---------------------------------------------------------------------------
+// Structured data. FAQPage mirrors the FAQ accordion rendered below it
+// verbatim (real, visible copy — required for FAQ rich results). The
+// testimonials above are placeholder design content (see the PHOTO
+// PLACEHOLDER comments), so no Review/AggregateRating schema is added for
+// them — fabricated review markup violates Google's structured data
+// guidelines; add it once real testimonials replace the placeholders.
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((key) => ({
+    "@type": "Question",
+    name: t(locale, `pricing.faq.${key}`),
+    acceptedAnswer: { "@type": "Answer", text: t(locale, `pricing.faq.a${key.slice(1)}`) },
+  })),
+};
+
+// priceCurrency assumes USD to match the "$" shown in the pricing section
+// below — confirm against the actual Stripe price object's currency before
+// relying on this for merchant/rich-result surfaces.
+const softwareAppJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "CV Maker",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  description: t(locale, "marketing.hero.subtitle"),
+  offers: [
+    { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD" },
+    { "@type": "Offer", name: "Pro", price: "8.99", priceCurrency: "USD" },
+  ],
+};
 ---
 
 <BaseLayout
   title="Turn your CV into an interview magnet"
   description="Build your CV with the same framework career coaches use, then get an honest AI report scoring it against six real recruiter objections."
   surface="dark"
+  jsonLd={[faqJsonLd, softwareAppJsonLd]}
 >
   <!-- ============================= HERO ============================= -->
   <section id="hero" class="relative overflow-hidden px-5 pb-24 pt-16 sm:px-8 sm:pb-32 sm:pt-20">

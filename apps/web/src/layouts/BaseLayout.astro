@@ -26,8 +26,78 @@ interface Props {
    * marketing footer competing for attention — default true for everything
    * else (marketing pages, auth, dashboard). */
   showFooter?: boolean;
+  /** Every page behind <RequireAuth> (dashboard, account, billing, the CV
+   * Optimizer, every builder step) renders the same static, contentless app
+   * shell for a logged-out crawler — real content only ever shows up
+   * client-side, behind a session. Pass true on those so search engines
+   * don't index an empty shell or waste crawl budget on it; every gated
+   * route in astro.config.mjs's sitemap filter should match one of these
+   * pages, and vice versa. Leave false (default) for genuine marketing/
+   * legal pages. */
+  noindex?: boolean;
+  /** Absolute or root-relative image URL for og:image / twitter:image.
+   * Defaults to the brand's static share image — swap per-page when a real
+   * product screenshot is available (see the placeholder comments on
+   * index.astro's hero/optimizer sections). */
+  ogImage?: string;
+  ogType?: "website" | "article" | "profile";
+  /** Raw JSON-LD object(s) for this page, stringified and inlined as-is —
+   * lets each page own the schema that actually describes it (FAQPage,
+   * SoftwareApplication/Offer, etc.) instead of BaseLayout guessing.
+   * BaseLayout always injects the sitewide Organization/WebSite graph
+   * itself; pass additional structured data here, it doesn't replace that. */
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
-const { title, description, surface = "light", showNav = true, nav = "marketing", showFooter = true } = Astro.props;
+const {
+  title,
+  description,
+  surface = "light",
+  showNav = true,
+  nav = "marketing",
+  showFooter = true,
+  noindex = false,
+  ogImage = "/og-image.png",
+  ogType = "website",
+  jsonLd,
+} = Astro.props;
+
+const metaDescription = description ?? "CV Maker. Build a polished CV in minutes, free to start and free to export.";
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const absoluteOgImage = new URL(ogImage, Astro.site);
+
+// Sitewide structured data — an Organization/WebSite graph is true on every
+// page, so it lives here once rather than being copy-pasted per page. Only
+// facts that are actually true belong in this object (real name, real
+// domain, real parent company) — see the file-level note on index.astro
+// about not fabricating review/rating data the same way.
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${Astro.site}#organization`,
+      name: "CV Maker",
+      url: Astro.site,
+      logo: absoluteOgImage.toString(),
+      parentOrganization: {
+        "@type": "Organization",
+        name: "Flathire",
+        url: "https://flathire.agency",
+      },
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${Astro.site}#website`,
+      url: Astro.site,
+      name: "CV Maker",
+      description: "Build a polished CV with the framework career coaches use, then get an honest AI report scoring it against six real recruiter objections.",
+      publisher: { "@id": `${Astro.site}#organization` },
+      inLanguage: "en",
+    },
+  ],
+};
+
+const pageJsonLd = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 ---
 
 <!doctype html>
@@ -35,8 +105,15 @@ const { title, description, surface = "light", showNav = true, nav = "marketing"
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content={description ?? "CV Maker. Build a polished CV in minutes, free to start and free to export."} />
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%230A1628%22/><text x=%2250%22 y=%2266%22 font-size=%2260%22 text-anchor=%22middle%22 fill=%22%23E8640C%22 font-family=%22sans-serif%22>C</text></svg>" />
+    <meta name="description" content={metaDescription} />
+    <link rel="canonical" href={canonicalURL} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#0A1628" />
+
     {/* A middot separator, not "{title}, CV Maker" — a comma placed directly
      * after a `{expression}` in Astro template text triggers a parser bug
      * that silently drops the following `<body>` tag's attributes (verified:
@@ -44,6 +121,25 @@ const { title, description, surface = "light", showNav = true, nav = "marketing"
      * Also sidesteps the "no em dashes" copy rule for what isn't really a
      * sentence anyway. */}
     <title>{title} · CV Maker</title>
+
+    <!-- Open Graph / Twitter card — same title+description as above so
+         social previews and search snippets never disagree. -->
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content="CV Maker" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={`${title} · CV Maker`} />
+    <meta property="og:description" content={metaDescription} />
+    <meta property="og:image" content={absoluteOgImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={`${title} · CV Maker`} />
+    <meta name="twitter:description" content={metaDescription} />
+    <meta name="twitter:image" content={absoluteOgImage} />
+
+    <script type="application/ld+json" set:html={JSON.stringify(organizationJsonLd)} />
+    {pageJsonLd.map((schema) => <script type="application/ld+json" set:html={JSON.stringify(schema)} />)}
   </head>
   <body data-surface={surface}>
     {showNav && (nav === "app" ? <AppNav /> : <SiteNav surface={surface} />)}

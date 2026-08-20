@@ -7,9 +7,41 @@ const locale = DEFAULT_LOCALE;
 const freeFeatures = ["cvs", "sections", "templates", "export", "autosave"] as const;
 const proFeatures = ["everything", "optimizer", "guide", "watermark", "templates", "cancel"] as const;
 const faqs = ["q1", "q2", "q3"] as const;
+
+// FAQPage mirrors the accordion below verbatim (real, visible copy —
+// required for FAQ rich results).
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((key) => ({
+    "@type": "Question",
+    name: t(locale, `pricing.faq.${key}`),
+    acceptedAnswer: { "@type": "Answer", text: t(locale, `pricing.faq.a${key.slice(1)}`) },
+  })),
+};
+
+// priceCurrency assumes USD to match the "$" shown below — confirm against
+// the actual Stripe price object's currency before relying on this for
+// merchant/rich-result surfaces.
+const softwareAppJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "CV Maker",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  offers: [
+    { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD" },
+    { "@type": "Offer", name: "Pro", price: "8.99", priceCurrency: "USD" },
+  ],
+};
 ---
 
-<BaseLayout title="Pricing" description="One free plan, one upgrade, no surprises." surface="dark">
+<BaseLayout
+  title="Pricing"
+  description="One free plan, one upgrade, no surprises. Unlimited CVs and watermarked exports free forever, or go Pro for $8.99/month."
+  surface="dark"
+  jsonLd={[faqJsonLd, softwareAppJsonLd]}
+>
   <section class="px-5 pb-20 pt-16 sm:px-8 sm:pb-28 sm:pt-20">
     <div class="mx-auto max-w-2xl text-center" data-animate="fade-up">
       <p class="eyebrow text-xs text-orange" data-i18n="pricing.eyebrow">{t(locale, "pricing.eyebrow")}</p>

@@ -3,6 +3,6 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import { BillingPage } from "@/domains/billing/BillingPage";
 ---
 
-<BaseLayout title="Billing" surface="light" showFooter={false} nav="app">
+<BaseLayout title="Billing" surface="light" showFooter={false} nav="app" noindex>
   <BillingPage client:load />
 </BaseLayout>

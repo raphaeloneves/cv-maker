@@ -3,6 +3,6 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import { NewReportPage } from "@/domains/optimizer/NewReportPage";
 ---
 
-<BaseLayout title="New CV Optimizer report" surface="light" showFooter={false} nav="app">
+<BaseLayout title="New CV Optimizer report" surface="light" showFooter={false} nav="app" noindex>
   <NewReportPage client:load />
 </BaseLayout>
