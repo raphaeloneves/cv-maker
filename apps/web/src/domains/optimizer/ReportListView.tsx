@@ -1,7 +1,8 @@
 import type { SVGProps } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { BuilderLocale, CvOptimizerReportSummary } from "@cv-maker/contracts";
-import { Button, Card, clsx } from "@/components/ui";
+import { Button, Card, clsx, inputBaseClasses, focusRingClasses } from "@/components/ui";
 import { t } from "@/i18n";
 import { listReports } from "./api";
 import { formatDate } from "./format";
@@ -48,6 +49,69 @@ const STEPS = [
   { key: "step2", Icon: CvIcon },
   { key: "step3", Icon: ReportIcon },
 ] as const;
+
+type VerdictFilter = "all" | "pass" | "reject";
+
+const VERDICT_FILTERS: readonly VerdictFilter[] = ["all", "pass", "reject"];
+
+function verdictFilterLabelKey(filter: VerdictFilter) {
+  switch (filter) {
+    case "all":
+      return "optimizer.filter.verdict.all";
+    case "pass":
+      return "optimizer.filter.verdict.pass";
+    case "reject":
+      return "optimizer.filter.verdict.reject";
+  }
+}
+
+function matchesVerdictFilter(report: CvOptimizerReportSummary, filter: VerdictFilter): boolean {
+  switch (filter) {
+    case "all":
+      return true;
+    case "pass":
+      return report.verdict === "pass";
+    case "reject":
+      return report.verdict === "reject";
+  }
+}
+
+/** The verdict quick filter — a row of toggle chips rather than a dropdown,
+ * since there are only three mutually-exclusive states and they're exactly
+ * the states already surfaced per-card (VerdictStamp, accent color), so
+ * recognizing them here as filters costs nothing extra. Only the decided
+ * verdict is filterable — pending/processing/failed reports aren't a verdict,
+ * they're just not there yet. */
+function VerdictFilterChips({
+  value,
+  onChange,
+  locale,
+}: {
+  value: VerdictFilter;
+  onChange: (filter: VerdictFilter) => void;
+  locale: BuilderLocale;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2" role="group" aria-label={t(locale, "optimizer.filter.label")}>
+      {VERDICT_FILTERS.map((filter) => (
+        <button
+          key={filter}
+          type="button"
+          aria-pressed={value === filter}
+          onClick={() => onChange(filter)}
+          className={clsx(
+            "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors duration-fast ease-standard",
+            value === filter
+              ? "bg-orange text-white"
+              : "border border-[var(--border-on-light)] bg-transparent text-heading hover:bg-surface-sunken",
+          )}
+        >
+          {t(locale, verdictFilterLabelKey(filter))}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 /** A colored left accent bar carrying the pass/reject signal through a
  * card — a real positioned element, not a `border-l-*` utility layered on
@@ -115,6 +179,25 @@ function ReportCard({ report, locale }: { report: CvOptimizerReportSummary; loca
 export function ReportListView({ locale }: { locale: BuilderLocale }) {
   const reportsQuery = useQuery({ queryKey: REPORTS_QUERY_KEY, queryFn: listReports });
 
+  const [filterQuery, setFilterQuery] = useState("");
+  const [verdictFilter, setVerdictFilter] = useState<VerdictFilter>("all");
+  const trimmedFilterQuery = filterQuery.trim();
+  const hasActiveFilter = trimmedFilterQuery.length > 0 || verdictFilter !== "all";
+  const filteredReports = useMemo(() => {
+    if (!reportsQuery.data) return reportsQuery.data;
+    const needle = trimmedFilterQuery.toLowerCase();
+    return reportsQuery.data.filter(
+      (report) =>
+        (!needle || report.roleTitle.toLowerCase().includes(needle)) &&
+        matchesVerdictFilter(report, verdictFilter),
+    );
+  }, [reportsQuery.data, trimmedFilterQuery, verdictFilter]);
+
+  const clearFilters = () => {
+    setFilterQuery("");
+    setVerdictFilter("all");
+  };
+
   return (
     <div className="mx-auto max-w-[90rem] px-5 py-10 sm:px-8">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -129,6 +212,20 @@ export function ReportListView({ locale }: { locale: BuilderLocale }) {
           {t(locale, "optimizer.newReport")}
         </Button>
       </div>
+
+      {reportsQuery.data && reportsQuery.data.length > 0 && (
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <input
+            type="search"
+            value={filterQuery}
+            onChange={(event) => setFilterQuery(event.target.value)}
+            placeholder={t(locale, "optimizer.filter.placeholder")}
+            aria-label={t(locale, "optimizer.filter.placeholder")}
+            className={clsx(inputBaseClasses, focusRingClasses, "sm:max-w-xs")}
+          />
+          <VerdictFilterChips value={verdictFilter} onChange={setVerdictFilter} locale={locale} />
+        </div>
+      )}
 
       {reportsQuery.isLoading && (
         <p className="mono-label text-xs text-text-muted">{t(locale, "common.loading")}</p>
@@ -164,9 +261,21 @@ export function ReportListView({ locale }: { locale: BuilderLocale }) {
         </Card>
       )}
 
-      {reportsQuery.data && reportsQuery.data.length > 0 && (
+      {reportsQuery.data && reportsQuery.data.length > 0 && hasActiveFilter && filteredReports?.length === 0 && (
+        <Card className="flex flex-col items-center gap-3 p-12 text-center">
+          <h2 className="font-display text-lg font-bold text-heading">
+            {t(locale, "optimizer.filter.empty.title")}
+          </h2>
+          <p className="max-w-sm text-sm text-text-muted">{t(locale, "optimizer.filter.empty.body")}</p>
+          <Button variant="secondary" onClick={clearFilters} className="mt-2">
+            {t(locale, "optimizer.filter.clear")}
+          </Button>
+        </Card>
+      )}
+
+      {filteredReports && filteredReports.length > 0 && (
         <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {reportsQuery.data.map((report) => (
+          {filteredReports.map((report) => (
             <li key={report.id}>
               <ReportCard report={report} locale={locale} />
             </li>
