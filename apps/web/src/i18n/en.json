@@ -501,6 +501,7 @@
   "optimizer.detail.score.explanation": "Not a plain average of the six results below. To score 85 or above, the CV has to actually pass the panel's own bar: zero outright rejects, and at most one \"needs work\". Miss that bar and the score stays at 65 or under, however good the rest looks, because an outright reject is treated as a much more serious signal than a couple of borderline results.",
   "optimizer.detail.rewrite.cta": "Generate an improved CV",
   "optimizer.detail.rewrite.pitch": "Apply the fixes above directly to your CV — the summary and experience bullets get rewritten, everything else stays as it is.",
+  "optimizer.detail.rewrite.ineligible": "Your score is too low for a rewrite to help. That can mean this role is a real stretch for your experience, or simply that your CV doesn't have enough concrete detail yet for a rewrite to work with — either way, a rewrite only sharpens facts that are already there, it never invents ones that aren't. Fill in more detail below, or work through the critical gaps above, then run a new report.",
   "optimizer.detail.rewrite.generating.title": "Generating your improved CV…",
   "optimizer.detail.rewrite.generating.body": "Leave this page open, it'll update on its own.",
   "optimizer.detail.rewrite.generating.message1": "Applying the fixes from your report",

@@ -12,7 +12,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const VARIANT_CLASSES: Record<Variant, string> = {
-  primary: "bg-orange text-white hover:bg-accent-hover disabled:bg-orange/50",
+  primary: "bg-orange text-white hover:bg-accent-hover",
   secondary:
     "bg-transparent text-heading border border-[var(--border-on-light)] hover:bg-surface-sunken",
   ghost: "bg-transparent text-heading hover:bg-surface-sunken",
@@ -41,7 +41,12 @@ export function Button({
   return (
     <button
       className={clsx(
-        "inline-flex items-center justify-center rounded-md font-semibold transition-colors duration-fast ease-standard disabled:cursor-not-allowed",
+        // opacity-50 (not just a lighter background) so disabled reads as
+        // "unavailable" at a glance — a paler orange alone still looks like
+        // an inviting CTA, just a softer one. pointer-events-none belts and
+        // braces the `disabled` attribute against hover states some
+        // browsers still apply to a disabled control.
+        "inline-flex items-center justify-center rounded-md font-semibold transition-colors duration-fast ease-standard disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50",
         VARIANT_CLASSES[variant],
         SIZE_CLASSES[size],
         className,

@@ -100,24 +100,28 @@ function VerdictHero({ content, locale }: { content: CvOptimizerReportContent; l
   return (
     <Card
       className={clsx(
-        "flex flex-col items-center gap-6 p-8 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left",
+        "flex flex-col items-center gap-6 p-8 text-center sm:flex-row sm:items-center sm:text-left",
         isPass ? "bg-success/5" : "bg-danger/5",
       )}
     >
       <p
         className={clsx(
-          "max-w-md border-l-2 pl-4 text-lg font-medium leading-snug text-heading",
+          "flex-1 border-l-2 pl-4 text-lg font-medium leading-snug text-heading",
           isPass ? "border-l-success/40" : "border-l-danger/40",
         )}
       >
         {content.verdictReasoning}
       </p>
-      <VerdictStamp verdict={content.verdict} locale={locale} animate />
-      <ScoreGauge
-        score={score}
-        label={t(locale, "optimizer.detail.score.label")}
-        tooltip={t(locale, "optimizer.detail.score.explanation")}
-      />
+      {/* Stamp above the gauge, as one centered two-row unit — not spread
+          out across the card's full width next to the text. */}
+      <div className="flex shrink-0 flex-col items-center gap-3">
+        <VerdictStamp verdict={content.verdict} locale={locale} animate />
+        <ScoreGauge
+          score={score}
+          label={t(locale, "optimizer.detail.score.label")}
+          tooltip={t(locale, "optimizer.detail.score.explanation")}
+        />
+      </div>
     </Card>
   );
 }
@@ -347,13 +351,20 @@ function PriorityActions({ items, locale }: { items: CvOptimizerPriorityAction[]
   );
 }
 
-/** "Generate an improved CV" — offered whenever `isEligibleForCvRewrite`
- * (score above the fixable-by-rewrite threshold), whether the report was
- * run against one of the user's own CVs or an uploaded PDF; the backend
- * picks the matching build strategy for either (see service.ts's
- * `createRewrite`). Reuses the same report row's `rewriteStatus` lifecycle
- * the backend tracks, polled by the same query as the report itself (see
- * ReportDetailView's refetchInterval). */
+/** "Generate an improved CV" — always shown, whether the report was run
+ * against one of the user's own CVs or an uploaded PDF; the backend picks
+ * the matching build strategy for either (see service.ts's `createRewrite`).
+ * Below `isEligibleForCvRewrite`'s threshold the button stays disabled with
+ * an explanation instead of disappearing — a hidden CTA reads as broken,
+ * and a low score isn't always the same story: it can be a genuine
+ * experience/scale mismatch for this role, or just a CV that hasn't written
+ * down enough concrete detail yet for a rewrite to have anything to sharpen.
+ * Either way a rewrite can't close the gap (see rewrite-llm.ts's "never
+ * invent a fact"), so the honest move is to say that plainly rather than
+ * offer a button that would either do nothing useful or make something up.
+ * Reuses the same report row's `rewriteStatus` lifecycle the backend tracks,
+ * polled by the same query as the report itself (see ReportDetailView's
+ * refetchInterval). */
 function RewriteCta({ report, locale }: { report: CvOptimizerReport; locale: BuilderLocale }) {
   const queryClient = useQueryClient();
   const rewriteMutation = useMutation({
@@ -365,7 +376,6 @@ function RewriteCta({ report, locale }: { report: CvOptimizerReport; locale: Bui
 
   if (!report.reportContent) return null;
   const score = computeObjectionsScorePercent(report.reportContent.objections);
-  if (!isEligibleForCvRewrite(score)) return null;
 
   if (report.rewriteStatus === "pending" || report.rewriteStatus === "processing") {
     return (
@@ -385,13 +395,30 @@ function RewriteCta({ report, locale }: { report: CvOptimizerReport; locale: Bui
 
   if (report.rewriteStatus === "completed" && report.rewriteCvId) {
     return (
-      <Card className="flex flex-wrap items-center justify-between gap-4 bg-success/5 p-5">
-        <div>
+      <Card className="flex flex-wrap items-center gap-4 bg-success/5 p-5">
+        <div className="flex-1">
           <p className="text-sm font-semibold text-heading">{t(locale, "optimizer.detail.rewrite.completed.title")}</p>
-          <p className="mt-0.5 max-w-md text-xs text-text-muted">{t(locale, "optimizer.detail.rewrite.completed.body")}</p>
+          <p className="mt-0.5 text-xs text-text-muted">{t(locale, "optimizer.detail.rewrite.completed.body")}</p>
         </div>
-        <Button onClick={() => (window.location.href = withCvId("/builder/personal-info", report.rewriteCvId))}>
+        <Button
+          className="shrink-0"
+          onClick={() => (window.location.href = withCvId("/builder/personal-info", report.rewriteCvId))}
+        >
           {t(locale, "optimizer.detail.rewrite.completed.viewCv")}
+        </Button>
+      </Card>
+    );
+  }
+
+  if (!isEligibleForCvRewrite(score)) {
+    return (
+      <Card className="flex flex-wrap items-center gap-4 p-5">
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-heading">{t(locale, "optimizer.detail.rewrite.cta")}</p>
+          <p className="mt-0.5 text-xs text-text-muted">{t(locale, "optimizer.detail.rewrite.ineligible")}</p>
+        </div>
+        <Button className="shrink-0" disabled>
+          {t(locale, "optimizer.detail.rewrite.cta")}
         </Button>
       </Card>
     );
@@ -399,16 +426,16 @@ function RewriteCta({ report, locale }: { report: CvOptimizerReport; locale: Bui
 
   const failed = report.rewriteStatus === "failed";
   return (
-    <Card className="flex flex-wrap items-center justify-between gap-4 p-5">
-      <div>
+    <Card className="flex flex-wrap items-center gap-4 p-5">
+      <div className="flex-1">
         <p className="text-sm font-semibold text-heading">{t(locale, "optimizer.detail.rewrite.cta")}</p>
-        <p className="mt-0.5 max-w-md text-xs text-text-muted">
+        <p className="mt-0.5 text-xs text-text-muted">
           {failed
             ? (report.rewriteErrorMessage ?? t(locale, "common.error.generic"))
             : t(locale, "optimizer.detail.rewrite.pitch")}
         </p>
       </div>
-      <Button onClick={() => rewriteMutation.mutate()} loading={rewriteMutation.isPending}>
+      <Button className="shrink-0" onClick={() => rewriteMutation.mutate()} loading={rewriteMutation.isPending}>
         {failed ? t(locale, "optimizer.detail.rewrite.failed.tryAgain") : t(locale, "optimizer.detail.rewrite.cta")}
       </Button>
     </Card>
