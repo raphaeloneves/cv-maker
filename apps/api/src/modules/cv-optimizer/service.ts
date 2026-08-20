@@ -1,5 +1,10 @@
 import type { BuilderLocale, CreateCvOptimizerReportFromUploadInput, CreateCvOptimizerReportInput, UserRole } from "@cv-maker/contracts";
-import { computeObjectionsScorePercent, hasActiveEntitlement, isEligibleForCvRewrite } from "@cv-maker/contracts";
+import {
+  computeObjectionsScorePercent,
+  hasActiveEntitlement,
+  isEligibleForCvRewrite,
+  isVerdictConsistentWithObjections,
+} from "@cv-maker/contracts";
 import { badRequest, conflict, forbidden, notFound } from "../../errors.js";
 import { getOwnedCv } from "../cvs/service.js";
 import { cvToDomain } from "../cvs/repository.js";
@@ -266,6 +271,14 @@ async function runGeneration(
             cv: await getRenderData(cvSource.cvId, userId, role),
           })
         : await generateReport({ roleTitle, jobDescription, outputLocale: locale, cvText: cvSource.text });
+    if (!isVerdictConsistentWithObjections(content.verdict, content.objections)) {
+      // Not corrected here on purpose (see isVerdictConsistentWithObjections'
+      // own doc comment) — just surfaced so a real recurrence is visible in
+      // logs rather than silently shipped to the user as-is.
+      console.warn(
+        `[cv-optimizer] report ${reportId}: verdict "${content.verdict}" disagrees with its own objections scorecard`,
+      );
+    }
     await repo.completeReport(reportId, content);
   } catch (err) {
     // Log the real cause (API auth/rate-limit/schema-validation detail) for
