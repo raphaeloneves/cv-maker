@@ -498,7 +498,7 @@
   "optimizer.detail.verdict.pass": "Aprovado",
   "optimizer.detail.verdict.reject": "Reprovado",
   "optimizer.detail.score.label": "Pontuação de relevância",
-  "optimizer.detail.score.explanation": "A média dos seis resultados abaixo: aprovado conta 100, a melhorar conta 50, rejeitado conta 0. É um resumo dos vereditos, não uma opinião à parte.",
+  "optimizer.detail.score.explanation": "Não é uma média simples dos seis resultados abaixo. Para pontuar 85 ou mais, o CV tem mesmo de passar no critério do painel: zero rejeições diretas, e no máximo um \"a melhorar\". Se não passar nesse critério, a pontuação fica em 65 ou menos, por melhor que o resto pareça, porque uma rejeição direta pesa muito mais do que alguns resultados no limite.",
   "optimizer.detail.rewrite.cta": "Gerar um CV melhorado",
   "optimizer.detail.rewrite.pitch": "Aplica as correções acima diretamente ao seu CV — o resumo e os pontos de experiência são reescritos, o resto mantém-se como está.",
   "optimizer.detail.rewrite.generating.title": "A gerar o seu CV melhorado…",

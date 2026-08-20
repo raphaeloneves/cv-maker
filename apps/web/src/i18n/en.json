@@ -498,7 +498,7 @@
   "optimizer.detail.verdict.pass": "Pass",
   "optimizer.detail.verdict.reject": "Reject",
   "optimizer.detail.score.label": "Relevance score",
-  "optimizer.detail.score.explanation": "The average of the six objection results below: pass counts as 100, needs work as 50, reject as 0. It's a summary of the verdicts, not a separate opinion.",
+  "optimizer.detail.score.explanation": "Not a plain average of the six results below. To score 85 or above, the CV has to actually pass the panel's own bar: zero outright rejects, and at most one \"needs work\". Miss that bar and the score stays at 65 or under, however good the rest looks, because an outright reject is treated as a much more serious signal than a couple of borderline results.",
   "optimizer.detail.rewrite.cta": "Generate an improved CV",
   "optimizer.detail.rewrite.pitch": "Apply the fixes above directly to your CV — the summary and experience bullets get rewritten, everything else stays as it is.",
   "optimizer.detail.rewrite.generating.title": "Generating your improved CV…",

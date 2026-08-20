@@ -258,15 +258,68 @@ export const cvOptimizerReportSummarySchema = cvOptimizerReportSchema.omit({ rep
 });
 export type CvOptimizerReportSummary = z.infer<typeof cvOptimizerReportSummarySchema>;
 
+/** The same bar the panel itself applies when deciding its top-level
+ * pass/reject verdict (see `llm.ts`'s SYSTEM_PROMPT, "HOW YOU DELIVER THE
+ * VERDICT"): zero outright rejects, and at most one objection landing as a
+ * borderline partial. Pulled out on its own so `computeObjectionsScorePercent`
+ * and `isVerdictConsistentWithObjections` can't quietly drift apart on what
+ * "passing" means — a CV that fails this bar must never be able to show a
+ * gauge score that reads as good, whatever the verdict ends up saying. */
+function meetsPanelPassBar(objections: CvOptimizerObjection[]): boolean {
+  const rejectCount = objections.filter((o) => o.status === "reject").length;
+  const partialCount = objections.filter((o) => o.status === "partial").length;
+  return rejectCount === 0 && partialCount <= 1;
+}
+
 /** A real, defensible 0-100 number computed from the six objection verdicts
- * (pass = 100, partial = 50, reject = 0, averaged) — not a percentage Claude
- * invents. Used to drive the score gauge's gradient in both the report list
- * (via the summary) and the report detail page, from the exact same six
- * statuses a reader sees spelled out in the report itself, so the number on
- * the gauge can never disagree with the verdicts backing it. */
+ * — not a percentage Claude invents, and not a naive average either. A plain
+ * average (pass=100, partial=50, reject=0) let a CV with two partials and no
+ * rejects land at 83, right next to a "Rejected" stamp: a number a reader
+ * reasonably reads as good, contradicting the verdict it sits beside. That
+ * undermines trust in the score more than a low number ever would.
+ *
+ * Instead the score is split into two bands that never overlap, mirroring
+ * `meetsPanelPassBar` exactly:
+ *  - PASS band [85, 100]: only reachable when the CV actually clears the
+ *    panel's bar. A clean sweep (six passes) scores 100; the one partial the
+ *    bar still tolerates costs 15 points, never enough to look like anything
+ *    but a clear pass.
+ *  - FAIL band [0, 65]: everything else, strictly below the pass band's
+ *    floor so the gauge can never disagree with a Rejected verdict at a
+ *    glance. Within the band, an outright reject costs far more than an
+ *    extra borderline partial — the panel's own framing treats a partial as
+ *    "still borderline" and a reject as a hard no, and the score should read
+ *    the same way: a CV with several soft partials and zero rejects sits
+ *    near the top of this band (closer to passing), while any reject at all
+ *    drags it down near the bottom (a real gap a rewrite likely can't fix —
+ *    see `CV_REWRITE_MIN_SCORE`). */
 export function computeObjectionsScorePercent(objections: CvOptimizerObjection[]): number {
   if (objections.length === 0) return 0;
-  const points: Record<CvOptimizerObjectionStatus, number> = { pass: 100, partial: 50, reject: 0 };
-  const total = objections.reduce((sum, o) => sum + points[o.status], 0);
-  return Math.round(total / objections.length);
+
+  const rejectCount = objections.filter((o) => o.status === "reject").length;
+  const partialCount = objections.filter((o) => o.status === "partial").length;
+
+  if (meetsPanelPassBar(objections)) {
+    return partialCount === 0 ? 100 : 85;
+  }
+
+  if (rejectCount === 0) {
+    // The mildest way to miss the bar: two or more partials, no rejects.
+    return Math.max(5, 65 - (partialCount - 2) * 15);
+  }
+  return Math.max(0, 35 - (rejectCount - 1) * 20 - Math.max(0, partialCount - 1) * 5);
+}
+
+/** Whether Claude's own top-level verdict actually agrees with the six
+ * objection statuses it just scored — same bar `computeObjectionsScorePercent`
+ * bands its score around (see `meetsPanelPassBar`). A `verdict` is generated
+ * independently (it's Claude's own field, not derived), so this is a
+ * server-side sanity check to log when the two disagree — never used to
+ * silently rewrite the verdict, since doing so would leave
+ * `verdictReasoning`'s prose arguing for the verdict that got overwritten. */
+export function isVerdictConsistentWithObjections(
+  verdict: CvOptimizerVerdict,
+  objections: CvOptimizerObjection[],
+): boolean {
+  return verdict === (meetsPanelPassBar(objections) ? "pass" : "reject");
 }
