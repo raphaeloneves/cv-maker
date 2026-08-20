@@ -35,12 +35,14 @@ const path = Astro.url.pathname;
 const ICONS = {
   cvs: `<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/>`,
   optimizer: `<path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><path d="M12 8a4 4 0 0 0 4 4 4 4 0 0 0-4 4 4 4 0 0 0-4-4 4 4 0 0 0 4-4Z"/>`,
-  billing: `<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>`,
-  account: `<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>`,
   logout: `<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/>`,
   chevron: `<path d="m6 9 6 6 6-6"/>`,
 } as const;
 
+// Billing and Account live in the user-name dropdown instead (see
+// #app-user-menu-panel below) — once you're behind the dropdown you've
+// already found "my account," so surfacing those two as top-level nav items
+// too is redundant with it, not complementary.
 const NAV_ITEMS = [
   {
     href: "/dashboard",
@@ -54,18 +56,6 @@ const NAV_ITEMS = [
     active: path.startsWith("/optimizer"),
     icon: ICONS.optimizer,
     badgeKey: "nav.badge.pro",
-  },
-  {
-    href: "/billing",
-    i18nKey: "nav.billing",
-    active: path.startsWith("/billing"),
-    icon: ICONS.billing,
-  },
-  {
-    href: "/account",
-    i18nKey: "nav.account",
-    active: path.startsWith("/account"),
-    icon: ICONS.account,
   },
 ] as const;
 ---
@@ -140,6 +130,14 @@ const NAV_ITEMS = [
       >
         <p id="app-user-menu-email" class="truncate px-3 py-2 text-sm text-text-muted"></p>
         <div class="my-1 border-t border-[var(--border-on-light)]"></div>
+        <a
+          href="/billing"
+          role="menuitem"
+          data-i18n="nav.billing"
+          class="block rounded-[5px] px-3 py-2 text-sm font-medium text-heading transition-colors duration-fast ease-standard hover:bg-surface-sunken"
+        >
+          {t(locale, "nav.billing")}
+        </a>
         <a
           href="/account"
           role="menuitem"
