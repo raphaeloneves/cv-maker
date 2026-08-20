@@ -23,10 +23,10 @@ const REPORT_JSON_SCHEMA = {
   type: "object",
   additionalProperties: false,
   required: [
-    "verdict",
-    "verdictReasoning",
     "framework",
     "objections",
+    "verdict",
+    "verdictReasoning",
     "criticalGaps",
     "strongestElements",
     "priorityActions",
@@ -34,8 +34,6 @@ const REPORT_JSON_SCHEMA = {
     "nextSteps",
   ],
   properties: {
-    verdict: { type: "string", enum: ["pass", "reject"] },
-    verdictReasoning: { type: "string", description: "One plain sentence explaining the verdict." },
     framework: {
       type: "object",
       additionalProperties: false,
@@ -75,6 +73,18 @@ const REPORT_JSON_SCHEMA = {
           actionItems: { type: "array", items: { type: "string" }, description: "Concrete changes that would fix this objection." },
         },
       },
+    },
+    // Deliberately generated *after* `framework`/`objections`, not before —
+    // structured outputs fill fields in schema property order, so putting
+    // the verdict first would have Claude commit to a pass/reject before
+    // it had scored a single objection, letting the two disagree (see this
+    // file's SYSTEM_PROMPT "HOW YOU DELIVER THE VERDICT" for the explicit
+    // consistency rule that pairs with this ordering).
+    verdict: { type: "string", enum: ["pass", "reject"] },
+    verdictReasoning: {
+      type: "string",
+      description:
+        "Two to four sentences giving the real impression this CV leaves after the five-second scan — who this person reads as, whether the first bullets land, whether the career story tracks, whether the scale is obvious. Never a tally of which objections were pass/partial/reject or a citation of the pass/reject rule; that bookkeeping already lives in the objections scorecard. This just has to actually agree with that scorecard, not restate its arithmetic.",
     },
     criticalGaps: {
       type: "array",
@@ -169,7 +179,11 @@ WHAT YOU'RE OPTIMIZING FOR
 Cut risk, don't just show off skill. Every line should earn its place for this specific job; cut what doesn't. Job dates should show years, not months, so a short stint doesn't stand out for the wrong reason. Make it obvious, fast, that this person is relevant, delivers, makes career sense, and has worked at the right level. Good CVs read well for a human and parse well for an ATS at the same time.
 
 HOW YOU DELIVER THE VERDICT
-Give a straight pass or reject. There's no "it depends" here; if it's genuinely borderline, decide which way it leans for this job and say so. Quote the actual CV wherever you make a claim, never describe it in the abstract. Only recommend changes that would really move the needle for this specific job; skip the generic advice a hundred blog posts already give. Use plain words anyone can act on immediately, no recruiting jargon. If something is weak, say so plainly. If something is exaggerated, call it out. If something is underclaimed, say that too. Write in full sentences, never use an em dash.
+Score all six objections first. Your overall verdict is never a separate, independent impression: it must follow directly from that scorecard, the same way a real hiring panel's final call follows from the objections they actually raised, not from a gut feeling formed before the discussion. Concretely: reject if any objection is a reject, or if two or more are only partial; pass requires at least five of the six to be a clear pass, with at most one partial and zero rejects. There's no "it depends" here; if the scorecard puts you right on that line, reject, since a recruiter's six doubts working against the candidate is not a borderline case. Never write a pass verdict when the scorecard you just produced reads mostly partial or reject, and never write a reject when it reads mostly pass, whatever your first impression was.
+
+That rule decides the verdict field. It is not what you write in verdictReasoning. A real recruiter doesn't reject a CV by announcing "two objections were partial, therefore reject" — they reject it because of what they actually saw: the summary didn't say who this person was, the first bullet buried the impact, the story had an unexplained jump, whatever it actually was. Go back to THE FIVE SECOND SCAN above and write verdictReasoning as that lived read: the real impression the CV leaves in the first few seconds, in the same plain, specific voice as the rest of this report. Never name an objection key, never mention "partial" or "reject" counts, never describe the panel's own rule — that arithmetic already lives in the objections scorecard, and repeating it back is not reasoning, it's bookkeeping.
+
+Quote the actual CV wherever you make a claim, never describe it in the abstract. Only recommend changes that would really move the needle for this specific job; skip the generic advice a hundred blog posts already give. Use plain words anyone can act on immediately, no recruiting jargon. If something is weak, say so plainly. If something is exaggerated, call it out. If something is underclaimed, say that too. Write in full sentences, never use an em dash.
 
 WHAT LANGUAGE YOU WRITE IN
 Write your entire response in output_language, the language given to you in the input — this is the candidate's own account language preference, not necessarily the language the CV or job description happen to be in. If they're in a different language, write your own analysis, summaries, and reasoning faithfully in output_language, but never translate a proper noun, employer name, tool name, date, or number: those stay exactly as given. The one exception is the examples field on each objection: those are direct quotes from the CV, so they stay verbatim in whatever language the CV itself uses — a translated quote isn't a quote anymore. Writing your own analysis in a different language than the source is not the same as inventing a fact — the rule above still applies in full to what that analysis claims, just not to which language it's written in.
