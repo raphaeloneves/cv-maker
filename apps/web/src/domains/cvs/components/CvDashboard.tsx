@@ -1,6 +1,7 @@
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Cv } from "@cv-maker/contracts";
-import { Button, Card, clsx } from "@/components/ui";
+import { Button, Card, clsx, inputBaseClasses, focusRingClasses } from "@/components/ui";
 import { t } from "@/i18n";
 import { getStoredLocale } from "@/lib/locale";
 import { AppQueryProvider } from "@/lib/query-client";
@@ -27,6 +28,15 @@ function DashboardBody() {
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
 
   const cvsQuery = useQuery({ queryKey: ["cvs"], queryFn: listCvs });
+
+  const [filterQuery, setFilterQuery] = useState("");
+  const trimmedFilterQuery = filterQuery.trim();
+  const filteredCvs = useMemo(() => {
+    if (!cvsQuery.data) return cvsQuery.data;
+    if (!trimmedFilterQuery) return cvsQuery.data;
+    const needle = trimmedFilterQuery.toLowerCase();
+    return cvsQuery.data.filter((cv) => cv.title.toLowerCase().includes(needle));
+  }, [cvsQuery.data, trimmedFilterQuery]);
 
   const createMutation = useMutation({
     mutationFn: () => createCv(),
@@ -61,6 +71,19 @@ function DashboardBody() {
         </Button>
       </div>
 
+      {cvsQuery.data && cvsQuery.data.length > 0 && (
+        <div className="mb-6">
+          <input
+            type="search"
+            value={filterQuery}
+            onChange={(event) => setFilterQuery(event.target.value)}
+            placeholder={t(locale, "dashboard.filter.placeholder")}
+            aria-label={t(locale, "dashboard.filter.label")}
+            className={clsx(inputBaseClasses, focusRingClasses, "max-w-sm")}
+          />
+        </div>
+      )}
+
       {cvsQuery.isLoading && (
         <p className="mono-label text-xs text-text-muted">{t(locale, "dashboard.loading")}</p>
       )}
@@ -81,9 +104,21 @@ function DashboardBody() {
         </Card>
       )}
 
-      {cvsQuery.data && cvsQuery.data.length > 0 && (
+      {cvsQuery.data && cvsQuery.data.length > 0 && filteredCvs && filteredCvs.length === 0 && (
+        <Card className="flex flex-col items-center gap-3 p-12 text-center">
+          <h2 className="font-display text-lg font-bold text-heading">
+            {t(locale, "dashboard.filter.empty.title").replace("{query}", trimmedFilterQuery)}
+          </h2>
+          <p className="max-w-sm text-sm text-text-muted">{t(locale, "dashboard.filter.empty.body")}</p>
+          <Button variant="secondary" onClick={() => setFilterQuery("")} className="mt-2">
+            {t(locale, "dashboard.filter.clear")}
+          </Button>
+        </Card>
+      )}
+
+      {filteredCvs && filteredCvs.length > 0 && (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {cvsQuery.data.map((cv) => (
+          {filteredCvs.map((cv) => (
             <li key={cv.id}>
               <Card className="flex h-full flex-col justify-between gap-4 p-5">
                 <div>

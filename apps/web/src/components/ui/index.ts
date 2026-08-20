@@ -1,6 +1,6 @@
 export { Button } from "./Button.js";
 export { Card } from "./Card.js";
-export { FieldShell, inputBaseClasses } from "./FieldShell.js";
+export { FieldShell, inputBaseClasses, focusRingClasses } from "./FieldShell.js";
 export { Input } from "./Input.js";
 export { Select } from "./Select.js";
 export { Toggle } from "./Toggle.js";

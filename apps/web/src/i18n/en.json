@@ -214,6 +214,11 @@
   "dashboard.card.delete": "Delete",
   "dashboard.card.deleteConfirm": "Delete this CV? This can't be undone.",
   "dashboard.loading": "Loading your CVs…",
+  "dashboard.filter.placeholder": "Filter by title…",
+  "dashboard.filter.label": "Filter CVs",
+  "dashboard.filter.empty.title": "No CVs match \"{query}\"",
+  "dashboard.filter.empty.body": "Try a different title, or clear the filter.",
+  "dashboard.filter.clear": "Clear filter",
 
   "personalInfo.title": "Personal details",
   "personalInfo.subtitle": "This appears at the top of every template.",

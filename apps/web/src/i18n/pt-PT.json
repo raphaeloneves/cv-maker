@@ -214,6 +214,11 @@
   "dashboard.card.delete": "Eliminar",
   "dashboard.card.deleteConfirm": "Eliminar este CV? Esta ação não pode ser desfeita.",
   "dashboard.loading": "A carregar os seus CVs…",
+  "dashboard.filter.placeholder": "Filtrar por título…",
+  "dashboard.filter.label": "Filtrar CVs",
+  "dashboard.filter.empty.title": "Nenhum CV corresponde a \"{query}\"",
+  "dashboard.filter.empty.body": "Tente um título diferente, ou limpe o filtro.",
+  "dashboard.filter.clear": "Limpar filtro",
 
   "personalInfo.title": "Detalhes pessoais",
   "personalInfo.subtitle": "Isto aparece no topo de todos os modelos.",
