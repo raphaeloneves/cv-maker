@@ -1,5 +1,5 @@
 import argon2 from "argon2";
-import type { AuthSession, LogInInput, SignUpInput } from "@cv-maker/contracts";
+import type { AuthSession, AuthUser, LogInInput, SignUpInput, UpdateLocaleInput } from "@cv-maker/contracts";
 import { AppError, badRequest, unauthorized } from "../../errors.js";
 import * as repo from "./repository.js";
 import {
@@ -107,5 +107,14 @@ export async function logOut(presentedToken: string | undefined): Promise<void> 
 export async function me(userId: string) {
   const user = await repo.findUserById(userId);
   if (!user) throw badRequest("User no longer exists");
+  return repo.userToAuthUser(user);
+}
+
+/** Backs the account settings page's language switch — keeps `user.locale`
+ * (what cv-optimizer's `getAccountLocale()` uses to pick the report/rewrite
+ * output language) in sync with the UI chrome locale the user actually
+ * selects, instead of that switch staying a client-only `localStorage` toggle. */
+export async function updateLocale(userId: string, input: UpdateLocaleInput): Promise<AuthUser> {
+  const user = await repo.updateUserLocale(userId, input.locale);
   return repo.userToAuthUser(user);
 }

@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { logInSchema, signUpSchema } from "@cv-maker/contracts";
+import { logInSchema, signUpSchema, updateLocaleSchema } from "@cv-maker/contracts";
 import { requireAuth } from "../../plugins/auth.js";
 import * as service from "./service.js";
 import { REFRESH_COOKIE_NAME, refreshTokenExpiry } from "./tokens.js";
@@ -51,5 +51,10 @@ export async function registerAuthRoutes(app: FastifyInstance) {
 
   app.get("/auth/me", { preHandler: requireAuth }, async (req) => {
     return service.me(req.user!.id);
+  });
+
+  app.patch("/auth/me", { preHandler: requireAuth }, async (req) => {
+    const input = updateLocaleSchema.parse(req.body);
+    return service.updateLocale(req.user!.id, input);
   });
 }

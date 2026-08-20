@@ -3,6 +3,7 @@ import { Card, clsx } from "@/components/ui";
 import { AppQueryProvider } from "@/lib/query-client";
 import { RequireAuth } from "@/domains/auth/components/RequireAuth";
 import { setStoredLocale } from "@/lib/locale";
+import { updateLocale } from "@/domains/auth/api";
 import { t } from "@/i18n";
 import { useBuilderLocale } from "@/lib/use-builder-locale";
 
@@ -22,8 +23,14 @@ function formatDate(iso: string, locale: string): string {
  * no per-request server, so already-shipped text can only pick up the new
  * language on a fresh load (see src/lib/locale.ts). */
 function LocaleSwitch({ current }: { current: BuilderLocale }) {
-  function select(next: BuilderLocale) {
+  async function select(next: BuilderLocale) {
     if (next === current) return;
+    // Best-effort: also persist onto `user.locale` server-side, so the
+    // cv-optimizer's report/rewrite language follows this same switch
+    // instead of only ever matching whatever locale the account was created
+    // with (see AuthUser's `locale` field). A network hiccup here shouldn't
+    // block the UI chrome from switching, so it's never awaited-and-thrown.
+    updateLocale(next).catch((err) => console.error("Failed to persist account locale", err));
     setStoredLocale(next);
     window.location.reload();
   }

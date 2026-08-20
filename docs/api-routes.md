@@ -18,6 +18,7 @@ Base URL in dev: `http://localhost:4000`.
 | POST | `/auth/refresh` | — (reads refresh cookie) | `AuthSession` |
 | POST | `/auth/logout` | — | `204` (clears refresh cookie) |
 | GET | `/auth/me` | — | `AuthUser` |
+| PATCH | `/auth/me` | `UpdateLocaleInput` (`{ locale }`) | `AuthUser` — updates `user.locale`, the same field `cv-optimizer`'s `getAccountLocale()` uses to pick report/rewrite output language |
 
 Refresh token: httpOnly, `SameSite=None; Secure` cookie, name `cv_maker_refresh`.
 Access token: returned in JSON body only, held in memory client-side (never

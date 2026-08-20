@@ -1,5 +1,5 @@
-import { apiPost, apiGet, setAccessToken } from "@/lib/api-client";
-import type { SignUpInput, LogInInput, AuthSession, AuthUser } from "@cv-maker/contracts";
+import { apiPost, apiGet, apiPatch, setAccessToken } from "@/lib/api-client";
+import type { SignUpInput, LogInInput, AuthSession, AuthUser, BuilderLocale } from "@cv-maker/contracts";
 
 /** The exact terms/privacy revision the signup checkbox refers to. Recorded
  * verbatim as `acceptedTermsVersion` on the signup request — a real audit
@@ -30,4 +30,11 @@ export async function logOut(): Promise<void> {
 
 export function fetchMe(): Promise<AuthUser> {
   return apiGet<AuthUser>("/auth/me");
+}
+
+/** Keeps `user.locale` (what cv-optimizer's `getAccountLocale()` uses to pick
+ * the report/rewrite output language) in sync with the account settings
+ * page's language switch — see AccountPage.tsx's `LocaleSwitch`. */
+export function updateLocale(locale: BuilderLocale): Promise<AuthUser> {
+  return apiPatch<AuthUser>("/auth/me", { locale });
 }

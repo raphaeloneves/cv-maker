@@ -56,3 +56,7 @@ export function findRefreshTokenByHash(tokenHash: string) {
 export function revokeRefreshToken(id: string) {
   return db.refreshToken.update({ where: { id }, data: { revokedAt: new Date() } });
 }
+
+export function updateUserLocale(id: string, locale: "pt-PT" | "en") {
+  return db.user.update({ where: { id }, data: { locale: localeToDb(locale) } });
+}

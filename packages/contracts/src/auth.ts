@@ -19,6 +19,16 @@ export const signUpSchema = z.object({
 });
 export type SignUpInput = z.infer<typeof signUpSchema>;
 
+/** Body for `PATCH /auth/me` — the account settings page's language switch
+ * (see apps/web AccountPage.tsx) updates this alongside the client-only
+ * `builderUiLocale` preference, so the two never drift apart: this is the
+ * same `user.locale` column `getAccountLocale()` reads in cv-optimizer's
+ * service.ts to decide what language Claude writes reports/rewrites in. */
+export const updateLocaleSchema = z.object({
+  locale: builderLocaleSchema,
+});
+export type UpdateLocaleInput = z.infer<typeof updateLocaleSchema>;
+
 export const logInSchema = z.object({
   email: z.string().trim().email(),
   password: z.string().min(1),

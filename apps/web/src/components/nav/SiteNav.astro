@@ -149,7 +149,7 @@ const localeInactiveClasses = isDark ? "text-ice/70 hover:text-white" : "text-te
 <script>
   import { getStoredLocale, setStoredLocale } from "@/lib/locale";
   import { refreshSession } from "@/lib/api-client";
-  import { logOut } from "@/domains/auth/api";
+  import { logOut, updateLocale } from "@/domains/auth/api";
   import type { BuilderLocale } from "@cv-maker/contracts";
 
   const localeSwitch = document.getElementById("locale-switch");
@@ -170,25 +170,20 @@ const localeInactiveClasses = isDark ? "text-ice/70 hover:text-white" : "text-te
   // it here the same way LocaleHydration.astro corrects text nodes.
   paintLocaleSwitch(getStoredLocale());
 
-  localeSwitch?.addEventListener("click", (e) => {
-    const button = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-locale-option]");
-    const next = button?.dataset.localeOption;
-    if (next !== "en" && next !== "pt-PT") return;
-    setStoredLocale(next);
-    window.location.reload();
-  });
-
   // Nav is otherwise static Astro markup with no per-request auth context
   // (see the file-level comment) — this is the one place it needs to know
   // whether the visitor is signed in, so it silently tries to derive a
   // session from the httpOnly refresh cookie on every page load and swaps
   // the guest/authed button groups accordingly. Failure just means "signed
-  // out," not an error — swallowed on purpose.
+  // out," not an error — swallowed on purpose. The locale-switch handler
+  // below also needs this to decide whether to persist onto `user.locale`.
   const guestGroup = document.getElementById("nav-guest");
   const authedGroup = document.getElementById("nav-authed");
+  let signedIn = false;
   refreshSession()
     .then((session) => {
       if (!session) return;
+      signedIn = true;
       guestGroup?.classList.add("hidden");
       authedGroup?.classList.remove("hidden");
       authedGroup?.classList.add("flex");
@@ -196,6 +191,18 @@ const localeInactiveClasses = isDark ? "text-ice/70 hover:text-white" : "text-te
     .catch(() => {
       /* not signed in — guest nav (the default) is already showing */
     });
+
+  localeSwitch?.addEventListener("click", (e) => {
+    const button = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-locale-option]");
+    const next = button?.dataset.localeOption;
+    if (next !== "en" && next !== "pt-PT") return;
+    // Best-effort: also persist onto `user.locale` server-side when signed
+    // in, so cv-optimizer's report/rewrite language follows this same
+    // switch (see AccountPage.tsx's LocaleSwitch, which does the same).
+    if (signedIn) updateLocale(next).catch((err) => console.error("Failed to persist account locale", err));
+    setStoredLocale(next);
+    window.location.reload();
+  });
 
   document.getElementById("nav-logout")?.addEventListener("click", async () => {
     await logOut();
