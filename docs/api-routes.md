@@ -137,6 +137,23 @@ right after create — no job queue, poll `GET .../reports/:id` for status.
 | POST | `/cv-optimizer/reports` | `CreateCvOptimizerReportInput` (`cvId` required) | `CvOptimizerReport` with `status: 'pending'` — generation continues in the background |
 | POST | `/cv-optimizer/reports/upload` | multipart: `roleTitle`, `jobDescriptionText` or `jobDescriptionUrl`, `cvFile` (PDF, max 8MB) | Same as above — `cvId` is `null`, `uploadedCvFileName` is set instead |
 
+## Academy (`academy.ts`)
+
+Post-auth learning section: a curated slice of the founder's own career-
+coaching classroom. Module/lesson definitions and body copy are static
+content in `apps/api/src/modules/academy/content.ts`, not a DB table — the
+API only persists per-user completion. 2 lessons are free for every account;
+every lesson inside a group requires the same `hasActiveEntitlement()` check
+as CV Optimizer/Billing (or `role: 'admin'`). A locked lesson's content route
+returns `403`; the outline route never 403s — it reflects lock state per
+lesson via `locked` instead.
+
+| Method | Path | Body | Response |
+|---|---|---|---|
+| GET | `/academy/outline` | — | `AcademyOutline` — standalone free lessons + the two groups, each lesson summarized with `locked`/`completed` |
+| GET | `/academy/lessons/:slug` | — | `AcademyLessonContent` (`404` unknown slug, `403` locked) |
+| POST | `/academy/lessons/:slug/complete` | — | `204` (idempotent; `404`/`403` same as above — can't complete what you can't read) |
+
 ## Error shape
 
 All 4xx/5xx responses: `{ "error": { "code": string, "message": string, "fields"?: Record<string, string> } }`.

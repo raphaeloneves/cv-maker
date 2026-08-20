@@ -7,7 +7,7 @@ import sitemap from "@astrojs/sitemap";
 // meaningful content for a logged-out crawler (see the `noindex` prop each
 // of these pages passes to BaseLayout/BuilderLayout) — kept out of the
 // sitemap for the same reason, and in one place so the two can't drift.
-const GATED_PATH_PREFIXES = ["/dashboard", "/account", "/billing", "/optimizer", "/builder"];
+const GATED_PATH_PREFIXES = ["/dashboard", "/account", "/billing", "/optimizer", "/builder", "/academy"];
 
 // Static output — all dynamic state comes from the API (apps/api) over
 // fetch/TanStack Query, so no Astro SSR/adapter is needed. Deploys as-is to

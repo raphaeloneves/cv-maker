@@ -42,11 +42,12 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  cvs                 Cv[]
-  subscription        Subscription?
-  termsAcceptances    TermsAcceptance[]
-  refreshTokens       RefreshToken[]
-  cvOptimizerReports  CvOptimizerReport[]
+  cvs                    Cv[]
+  subscription           Subscription?
+  termsAcceptances       TermsAcceptance[]
+  refreshTokens          RefreshToken[]
+  cvOptimizerReports     CvOptimizerReport[]
+  academyLessonProgress  AcademyLessonProgress[]
 
   @@map("users")
 }
@@ -480,4 +481,27 @@ model CvOptimizerReport {
 
   @@index([userId])
   @@map("cv_optimizer_reports")
+}
+
+// ---------------------------------------------------------------------------
+// Academy (post-auth learning section) — module/lesson definitions and their
+// body copy are static content in apps/api/src/modules/academy/content.ts
+// (editorial content edited in code, not a DB table, same reasoning as
+// TemplateId), so the only thing persisted here is per-user completion.
+// Gating (which lessons are free vs. require an active entitlement) is
+// computed at request time from that same content.ts + hasActiveEntitlement,
+// never stored.
+// ---------------------------------------------------------------------------
+
+model AcademyLessonProgress {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Slug from content.ts's lesson registry — not a FK, since lessons aren't
+  // a DB table.
+  lessonSlug  String
+  completedAt DateTime @default(now())
+
+  @@unique([userId, lessonSlug])
+  @@map("academy_lesson_progress")
 }
