@@ -271,43 +271,72 @@ function meetsPanelPassBar(objections: CvOptimizerObjection[]): boolean {
   return rejectCount === 0 && partialCount <= 1;
 }
 
+/** Per-status points for the plain arithmetic mean below — the "purely
+ * mathematical" half of `computeObjectionsScorePercent`. Symmetric on
+ * purpose (partial sits exactly halfway between pass and reject): any
+ * asymmetry belongs in the panel-weight half, not smuggled in here. */
+const OBJECTION_POINTS: Record<CvOptimizerObjectionStatus, number> = { pass: 100, partial: 50, reject: 0 };
+
+/** How much worse the panel treats one outright reject than the arithmetic
+ * mean already accounts for — the panel's framing is that a reject is a
+ * hard no, not just "twice as bad as a partial" (see `meetsPanelPassBar`'s
+ * own doc comment). Same 20-point figure the previous per-count formula
+ * used for its reject penalty, now applied as a continuous adjustment on
+ * the raw mean instead of a hardcoded band offset. */
+const REJECT_PANEL_PENALTY = 20;
+
 /** A real, defensible 0-100 number computed from the six objection verdicts
- * — not a percentage Claude invents, and not a naive average either. A plain
- * average (pass=100, partial=50, reject=0) let a CV with two partials and no
- * rejects land at 83, right next to a "Rejected" stamp: a number a reader
- * reasonably reads as good, contradicting the verdict it sits beside. That
- * undermines trust in the score more than a low number ever would.
+ * in two steps — not a percentage Claude invents:
  *
- * Instead the score is split into two bands that never overlap, mirroring
- * `meetsPanelPassBar` exactly:
- *  - PASS band [85, 100]: only reachable when the CV actually clears the
- *    panel's bar. A clean sweep (six passes) scores 100; the one partial the
- *    bar still tolerates costs 15 points, never enough to look like anything
- *    but a clear pass.
- *  - FAIL band [0, 65]: everything else, strictly below the pass band's
- *    floor so the gauge can never disagree with a Rejected verdict at a
- *    glance. Within the band, an outright reject costs far more than an
- *    extra borderline partial — the panel's own framing treats a partial as
- *    "still borderline" and a reject as a hard no, and the score should read
- *    the same way: a CV with several soft partials and zero rejects sits
- *    near the top of this band (closer to passing), while any reject at all
- *    drags it down near the bottom (a real gap a rewrite likely can't fix —
- *    see `CV_REWRITE_MIN_SCORE`). */
+ * 1. **The math**: a plain arithmetic mean of the six statuses
+ *    (pass=100, partial=50, reject=0). This is the only place granularity
+ *    comes from, so two reports rarely land on the exact same round number
+ *    just because they share a reject/partial count.
+ *
+ * 2. **The panel weight**: two adjustments the panel's own rules put on top
+ *    of that raw mean, mirroring `meetsPanelPassBar` exactly —
+ *    - an extra {@link REJECT_PANEL_PENALTY} points off per outright reject,
+ *      because the panel treats "hard no" as categorically worse than
+ *      "borderline", not just worse by the 50-point gap the mean alone
+ *      already gives it (this is what keeps `oneReject` scoring below
+ *      `twoPartialsNoReject` even though both have the same raw mean);
+ *    - a rescale into one of two bands that never overlap: PASS [85, 100],
+ *      reachable only when the CV actually clears the panel's bar (a clean
+ *      sweep scores 100; the one tolerated partial still lands at 85), and
+ *      FAIL [0, 65] for everything else — strictly below the pass band's
+ *      floor so the gauge can never disagree with a Rejected verdict at a
+ *      glance. A plain average alone let a CV with two partials and no
+ *      rejects land at 83, right next to a "Rejected" stamp: a number a
+ *      reader reasonably reads as good, contradicting the verdict beside
+ *      it. That undermined trust in the score more than a low number ever
+ *      would, so the rescale — not the mean — is what enforces the bar. */
 export function computeObjectionsScorePercent(objections: CvOptimizerObjection[]): number {
-  if (objections.length === 0) return 0;
+  const n = objections.length;
+  if (n === 0) return 0;
 
   const rejectCount = objections.filter((o) => o.status === "reject").length;
-  const partialCount = objections.filter((o) => o.status === "partial").length;
+
+  // Step 1 — the math: the panel's raw arithmetic mean, no banding yet.
+  const rawMean = objections.reduce((sum, o) => sum + OBJECTION_POINTS[o.status], 0) / n;
 
   if (meetsPanelPassBar(objections)) {
-    return partialCount === 0 ? 100 : 85;
+    // Passing combos only ever land in [(n-1)/n, 1] of the way to 100 (at
+    // most the one tolerated partial, zero rejects) — rescale that narrow
+    // range onto the pass band.
+    const passFloorRaw = (100 * (n - 1) + 50) / n;
+    const t = (rawMean - passFloorRaw) / (100 - passFloorRaw);
+    return Math.round(85 + t * 15);
   }
 
-  if (rejectCount === 0) {
-    // The mildest way to miss the bar: two or more partials, no rejects.
-    return Math.max(5, 65 - (partialCount - 2) * 15);
-  }
-  return Math.max(0, 35 - (rejectCount - 1) * 20 - Math.max(0, partialCount - 1) * 5);
+  // Step 2 — the panel weight: the extra reject penalty, then a rescale of
+  // whatever's left onto the fail band. `failCeilingRaw` is the highest raw
+  // mean any failing combo can reach before the penalty (either n-1 passes
+  // plus one reject, or n-2 passes plus two partials both average to the
+  // same (n-1)/n) — provably never exceeded by a failing combo, so the
+  // ratio below never exceeds 1.
+  const failCeilingRaw = (100 * (n - 1)) / n;
+  const weighted = Math.max(0, rawMean - REJECT_PANEL_PENALTY * rejectCount);
+  return Math.round((weighted / failCeilingRaw) * 65);
 }
 
 /** Whether Claude's own top-level verdict actually agrees with the six

@@ -71,6 +71,41 @@ describe("computeObjectionsScorePercent", () => {
       expect(score <= 65 || score >= 85).toBe(true);
     }
   });
+
+  it("weighs an outright reject as strictly worse than the arithmetic mean alone would, not just the 50-point gap pass/partial/reject points already give it", () => {
+    // Both combos below share the exact same raw mean (four passes' worth of
+    // points out of six) — a plain average can't tell them apart. The panel
+    // weight (the extra per-reject penalty) is what has to.
+    const oneReject = computeObjectionsScorePercent(objections(["pass", "pass", "pass", "pass", "pass", "reject"]));
+    const twoPartialsNoReject = computeObjectionsScorePercent(
+      objections(["pass", "pass", "partial", "pass", "partial", "pass"]),
+    );
+    expect(oneReject).toBe(49);
+    expect(twoPartialsNoReject).toBe(65);
+  });
+
+  it("spreads the fail band across far more than a handful of round multiples of 5 or 10", () => {
+    // The old per-count lookup table could only ever land on {0, 5, 10, ...,
+    // 65} — ten values, every one a multiple of 5. The arithmetic-mean-based
+    // formula should do meaningfully better than that on both counts.
+    const statuses: CvOptimizerObjectionStatus[] = ["pass", "partial", "reject"];
+    const failScores = new Set<number>();
+    for (let mask = 0; mask < 3 ** 6; mask++) {
+      const combo: CvOptimizerObjectionStatus[] = [];
+      let m = mask;
+      for (let i = 0; i < 6; i++) {
+        combo.push(statuses[m % 3] as CvOptimizerObjectionStatus);
+        m = Math.floor(m / 3);
+      }
+      const objs = objections(combo);
+      if (isVerdictConsistentWithObjections("reject", objs)) {
+        failScores.add(computeObjectionsScorePercent(objs));
+      }
+    }
+    expect(failScores.size).toBeGreaterThan(10);
+    const nonMultiplesOf5 = [...failScores].filter((score) => score % 5 !== 0);
+    expect(nonMultiplesOf5.length).toBeGreaterThan(0);
+  });
 });
 
 describe("isVerdictConsistentWithObjections", () => {
