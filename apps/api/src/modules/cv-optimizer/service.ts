@@ -1,10 +1,5 @@
 import type { BuilderLocale, CreateCvOptimizerReportFromUploadInput, CreateCvOptimizerReportInput, UserRole } from "@cv-maker/contracts";
-import {
-  computeObjectionsScorePercent,
-  hasActiveEntitlement,
-  isEligibleForCvRewrite,
-  isVerdictConsistentWithObjections,
-} from "@cv-maker/contracts";
+import { computePanelScorePercent, hasActiveEntitlement, isEligibleForCvRewrite } from "@cv-maker/contracts";
 import { badRequest, conflict, forbidden, notFound } from "../../errors.js";
 import { getOwnedCv } from "../cvs/service.js";
 import { cvToDomain } from "../cvs/repository.js";
@@ -140,9 +135,9 @@ export async function createRewrite(reportId: string, userId: string, role: User
   if (!report.cvId && !row.uploadedCvText) {
     throw badRequest("This report has no CV to build an improved version from.");
   }
-  const score = computeObjectionsScorePercent(report.reportContent.objections);
+  const score = computePanelScorePercent(report.reportContent.panelScores);
   if (!isEligibleForCvRewrite(score)) {
-    throw badRequest("This CV's objections score is too low for a rewrite to meaningfully help — see the report's priority actions instead.");
+    throw badRequest("This CV's panel score is too low for a rewrite to meaningfully help — see the report's priority actions instead.");
   }
   if (report.rewriteStatus === "pending" || report.rewriteStatus === "processing") {
     throw conflict("An improved CV is already being generated for this report.");
@@ -271,14 +266,9 @@ async function runGeneration(
             cv: await getRenderData(cvSource.cvId, userId, role),
           })
         : await generateReport({ roleTitle, jobDescription, outputLocale: locale, cvText: cvSource.text });
-    if (!isVerdictConsistentWithObjections(content.verdict, content.objections)) {
-      // Not corrected here on purpose (see isVerdictConsistentWithObjections'
-      // own doc comment) — just surfaced so a real recurrence is visible in
-      // logs rather than silently shipped to the user as-is.
-      console.warn(
-        `[cv-optimizer] report ${reportId}: verdict "${content.verdict}" disagrees with its own objections scorecard`,
-      );
-    }
+    // No verdict/scorecard consistency check needed here anymore — `content.verdict`
+    // is computed inside generateReport() from the same panel scores the UI
+    // displays, so the two can no longer drift apart (see llm.ts).
     await repo.completeReport(reportId, content);
   } catch (err) {
     // Log the real cause (API auth/rate-limit/schema-validation detail) for

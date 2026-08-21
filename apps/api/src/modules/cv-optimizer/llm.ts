@@ -1,5 +1,10 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { cvOptimizerReportContentSchema, type CvOptimizerReportContent } from "@cv-maker/contracts";
+import {
+  computePanelScorePercent,
+  computeVerdictFromPanelScore,
+  cvOptimizerReportContentSchema,
+  type CvOptimizerReportContent,
+} from "@cv-maker/contracts";
 import type { CvRenderData } from "@cv-maker/contracts";
 import { env } from "../../env.js";
 
@@ -14,6 +19,11 @@ const OBJECTION_KEYS = [
   "right_scale",
 ] as const;
 
+/** Fixed order `panelScores` must come back in — same order the prompt
+ * introduces the three panelists in, so "one per role" is easy for Claude
+ * to satisfy and easy for `computePanelScorePercent` to trust positionally. */
+const PANEL_ROLES = ["resume_writer", "career_coach", "recruiter"] as const;
+
 /** Structured-outputs JSON schema for `output_config.format` — hand-written
  * rather than derived from `cvOptimizerReportContentSchema` (the contracts
  * package builds on zod v3; the SDK's `zodOutputFormat()` helper takes a
@@ -25,7 +35,7 @@ const REPORT_JSON_SCHEMA = {
   required: [
     "framework",
     "objections",
-    "verdict",
+    "panelScores",
     "verdictReasoning",
     "criticalGaps",
     "strongestElements",
@@ -75,16 +85,36 @@ const REPORT_JSON_SCHEMA = {
       },
     },
     // Deliberately generated *after* `framework`/`objections`, not before —
-    // structured outputs fill fields in schema property order, so putting
-    // the verdict first would have Claude commit to a pass/reject before
-    // it had scored a single objection, letting the two disagree (see this
-    // file's SYSTEM_PROMPT "HOW YOU DELIVER THE VERDICT" for the explicit
-    // consistency rule that pairs with this ordering).
-    verdict: { type: "string", enum: ["pass", "reject"] },
+    // structured outputs fill fields in schema property order, so each
+    // panelist scores with the full six-objection analysis already done,
+    // not as a first impression that analysis then has to justify.
+    panelScores: {
+      type: "array",
+      description:
+        `Exactly three items, one per panelist, in this exact order: ${PANEL_ROLES.join(", ")}. There is no verdict field: the actual pass/reject line is computed afterward from these three numbers, not decided by you directly.`,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["role", "score", "rationale"],
+        properties: {
+          role: { type: "string", enum: [...PANEL_ROLES] },
+          // No `minimum`/`maximum` here — the Anthropic API rejects those on
+          // an `integer`-typed schema property (400: "not supported").
+          // 0-100 is enforced by `cvOptimizerPanelScoreSchema` right after
+          // parsing instead; the description is the only guardrail Claude
+          // itself sees.
+          score: {
+            type: "integer",
+            description: "This panelist's own holistic 0-100 read of the CV against this job — a gut professional call, not a tally of the six objections.",
+          },
+          rationale: { type: "string", description: "One or two sentences, in this panelist's own voice, on why they landed there." },
+        },
+      },
+    },
     verdictReasoning: {
       type: "string",
       description:
-        "Two to four sentences giving the real impression this CV leaves after the five-second scan — who this person reads as, whether the first bullets land, whether the career story tracks, whether the scale is obvious. Never a tally of which objections were pass/partial/reject or a citation of the pass/reject rule; that bookkeeping already lives in the objections scorecard. This just has to actually agree with that scorecard, not restate its arithmetic.",
+        "Two to four sentences giving the real impression this CV leaves after the five-second scan — who this person reads as, whether the first bullets land, whether the career story tracks, whether the scale is obvious. Never a tally of which objections were pass/partial/reject, never a number, never a citation of a scoring rule — just the lived read. Roughly: panel scores averaging 70+ reads as a pass, below that reads as a reject, so write in whichever register your own three scores actually landed in.",
     },
     criticalGaps: {
       type: "array",
@@ -178,10 +208,13 @@ A well built CV goes in this order: name and contact info, a short summary, core
 WHAT YOU'RE OPTIMIZING FOR
 Cut risk, don't just show off skill. Every line should earn its place for this specific job; cut what doesn't. Job dates should show years, not months, so a short stint doesn't stand out for the wrong reason. Make it obvious, fast, that this person is relevant, delivers, makes career sense, and has worked at the right level. Good CVs read well for a human and parse well for an ATS at the same time.
 
-HOW YOU DELIVER THE VERDICT
-Score all six objections first. Your overall verdict is never a separate, independent impression: it must follow directly from that scorecard, the same way a real hiring panel's final call follows from the objections they actually raised, not from a gut feeling formed before the discussion. Concretely: reject if any objection is a reject, or if two or more are only partial; pass requires at least five of the six to be a clear pass, with at most one partial and zero rejects. There's no "it depends" here; if the scorecard puts you right on that line, reject, since a recruiter's six doubts working against the candidate is not a borderline case. Never write a pass verdict when the scorecard you just produced reads mostly partial or reject, and never write a reject when it reads mostly pass, whatever your first impression was.
+EACH PANELIST'S OWN SCORE
+After the six objections are scored, step out of the shared scorecard for a moment and answer as yourself. You are three different professionals who read CVs for a living in three different ways: the resume writer notices wording, structure, and whether the document itself does its job; the career coach reads for trajectory, positioning, and whether this person is telling their own story well; the recruiter reads for risk, fit, and whether they'd stake their reputation on this candidate with the hiring manager. Given everything you just found, each of you gives your own honest 0-100 read of how this CV would actually fare for this exact job, plus one or two sentences of why, in your own voice. These three numbers do not have to agree with each other, and they are not a mechanical average of the six objection statuses — they are each panelist's real, holistic judgment call, the number they'd actually put in front of a client. A panel that's genuinely split (one confident, two skeptical) should produce genuinely split numbers, not three copies of a compromise.
 
-That rule decides the verdict field. It is not what you write in verdictReasoning. A real recruiter doesn't reject a CV by announcing "two objections were partial, therefore reject" — they reject it because of what they actually saw: the summary didn't say who this person was, the first bullet buried the impact, the story had an unexplained jump, whatever it actually was. Go back to THE FIVE SECOND SCAN above and write verdictReasoning as that lived read: the real impression the CV leaves in the first few seconds, in the same plain, specific voice as the rest of this report. Never name an objection key, never mention "partial" or "reject" counts, never describe the panel's own rule — that arithmetic already lives in the objections scorecard, and repeating it back is not reasoning, it's bookkeeping.
+HOW THE VERDICT GETS DECIDED
+There is no verdict field for you to fill in. The three panel scores above are combined into one number after you respond, and that number alone decides pass or reject — this removes the failure mode where a written verdict and a written scorecard could quietly disagree with each other. Your job is only to make each of the three scores an honest, defensible number and to write verdictReasoning as the real, lived impression the CV leaves, in whichever direction your own scores actually point. Don't hedge a low score with reasoning that sounds like a pass, and don't undersell a high score with reasoning that sounds like a reject — say what you actually saw.
+
+Writing verdictReasoning is not the same task as scoring. A real recruiter doesn't reject a CV by announcing "two objections were partial, therefore reject" — they reject it because of what they actually saw: the summary didn't say who this person was, the first bullet buried the impact, the story had an unexplained jump, whatever it actually was. Go back to THE FIVE SECOND SCAN above and write verdictReasoning as that lived read: the real impression the CV leaves in the first few seconds, in the same plain, specific voice as the rest of this report. Never name an objection key, never mention "partial" or "reject" counts, never cite a score or a scoring rule — that arithmetic is handled elsewhere, and repeating it back is not reasoning, it's bookkeeping.
 
 Quote the actual CV wherever you make a claim, never describe it in the abstract. Only recommend changes that would really move the needle for this specific job; skip the generic advice a hundred blog posts already give. Use plain words anyone can act on immediately, no recruiting jargon. If something is weak, say so plainly. If something is exaggerated, call it out. If something is underclaimed, say that too. Write in full sentences, never use an em dash.
 
@@ -254,8 +287,18 @@ export async function generateReport(input: GenerateReportInput): Promise<CvOpti
     throw new Error("Claude's response wasn't valid JSON.");
   }
 
+  // Claude's raw JSON has no `verdict` field (see REPORT_JSON_SCHEMA/
+  // SYSTEM_PROMPT's "HOW THE VERDICT GETS DECIDED") — compute it here, from
+  // the three panel scores it did return, before validating the full
+  // contract shape below. This is what makes "a good-looking score next to
+  // a Reject stamp" structurally impossible: the verdict is derived from
+  // the same number the UI displays, not a second opinion that can drift.
+  const panelScores = (parsedJson as { panelScores?: unknown }).panelScores;
+  const score = computePanelScorePercent(cvOptimizerReportContentSchema.shape.panelScores.parse(panelScores));
+  const withVerdict = { ...(parsedJson as Record<string, unknown>), verdict: computeVerdictFromPanelScore(score) };
+
   // Defense in depth: `output_config.format` constrains the shape Claude
   // returns, but this is still the boundary of trusted data — parse it
   // through the same schema the rest of the app types against.
-  return cvOptimizerReportContentSchema.parse(parsedJson);
+  return cvOptimizerReportContentSchema.parse(withVerdict);
 }

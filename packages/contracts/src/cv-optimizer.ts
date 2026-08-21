@@ -83,6 +83,28 @@ export const cvOptimizerObjectionSchema = z.object({
 });
 export type CvOptimizerObjection = z.infer<typeof cvOptimizerObjectionSchema>;
 
+/** The three hiring experts making up the panel (see llm.ts's SYSTEM_PROMPT)
+ * — always exactly these three, always in this order, so a `panelScores`
+ * array can be treated positionally without re-checking `role` everywhere. */
+export const cvOptimizerPanelRoleSchema = z.enum(["resume_writer", "career_coach", "recruiter"]);
+export type CvOptimizerPanelRole = z.infer<typeof cvOptimizerPanelRoleSchema>;
+
+/** One panelist's own holistic 0-100 read of this CV against this job —
+ * their gut professional judgment, not a mechanical tally of the six
+ * objections above (those stay separate, purely diagnostic). Three
+ * independent numbers instead of one panel-wide figure so the scoring math
+ * in `computePanelScorePercent` has something to actually weigh — a single
+ * combined score would collapse "unanimous 70s" and "40/70/100" into the
+ * same number, even though the second is a materially riskier bet. */
+export const cvOptimizerPanelScoreSchema = z.object({
+  role: cvOptimizerPanelRoleSchema,
+  score: z.number().int().min(0).max(100),
+  // One or two sentences, in that panelist's own voice — why they landed
+  // where they did, distinct from the shared `objections`/`finalAssessment`.
+  rationale: z.string(),
+});
+export type CvOptimizerPanelScore = z.infer<typeof cvOptimizerPanelScoreSchema>;
+
 export const cvOptimizerFrameworkAssessmentSchema = z.object({
   ratUsage: z.string(),
   actionVerbsOwnership: z.string(),
@@ -108,11 +130,19 @@ export const cvOptimizerPriorityActionSchema = z.object({
 export type CvOptimizerPriorityAction = z.infer<typeof cvOptimizerPriorityActionSchema>;
 
 export const cvOptimizerReportContentSchema = z.object({
+  // Computed server-side from `panelScores` via `computeVerdictFromPanelScore`
+  // right after Claude responds (see llm.ts's `generateReport`), never
+  // authored by Claude directly — the one thing that used to make the score
+  // and the verdict able to disagree. `verdictReasoning` is still Claude's
+  // own prose.
   verdict: cvOptimizerVerdictSchema,
   verdictReasoning: z.string(),
   framework: cvOptimizerFrameworkAssessmentSchema,
   // Always all six, in the fixed order above.
   objections: z.array(cvOptimizerObjectionSchema),
+  // Always exactly three, one per `cvOptimizerPanelRoleSchema` value, in
+  // that order — see `computePanelScorePercent`.
+  panelScores: z.array(cvOptimizerPanelScoreSchema).length(3),
   criticalGaps: z.array(cvOptimizerGapSchema),
   strongestElements: z.array(cvOptimizerStrengthSchema),
   priorityActions: z.array(cvOptimizerPriorityActionSchema),
@@ -153,8 +183,8 @@ export type CvOptimizerReport = z.infer<typeof cvOptimizerReportSchema>;
  * overpromise what the feature can deliver. */
 export const CV_REWRITE_MIN_SCORE = 50;
 
-export function isEligibleForCvRewrite(objectionsScorePercent: number | null): boolean {
-  return objectionsScorePercent !== null && objectionsScorePercent > CV_REWRITE_MIN_SCORE;
+export function isEligibleForCvRewrite(panelScorePercent: number | null): boolean {
+  return panelScorePercent !== null && panelScorePercent > CV_REWRITE_MIN_SCORE;
 }
 
 // --- The structured rewrite Claude returns for "Generate an improved CV" --
@@ -254,101 +284,53 @@ export type CvOptimizerExtractedCv = z.infer<typeof cvOptimizerExtractedCvSchema
  * payload. */
 export const cvOptimizerReportSummarySchema = cvOptimizerReportSchema.omit({ reportContent: true }).extend({
   verdict: cvOptimizerVerdictSchema.nullable(),
-  objectionsScorePercent: z.number().min(0).max(100).nullable(),
+  panelScorePercent: z.number().min(0).max(100).nullable(),
 });
 export type CvOptimizerReportSummary = z.infer<typeof cvOptimizerReportSummarySchema>;
 
-/** The same bar the panel itself applies when deciding its top-level
- * pass/reject verdict (see `llm.ts`'s SYSTEM_PROMPT, "HOW YOU DELIVER THE
- * VERDICT"): zero outright rejects, and at most one objection landing as a
- * borderline partial. Pulled out on its own so `computeObjectionsScorePercent`
- * and `isVerdictConsistentWithObjections` can't quietly drift apart on what
- * "passing" means — a CV that fails this bar must never be able to show a
- * gauge score that reads as good, whatever the verdict ends up saying. */
-function meetsPanelPassBar(objections: CvOptimizerObjection[]): boolean {
-  const rejectCount = objections.filter((o) => o.status === "reject").length;
-  const partialCount = objections.filter((o) => o.status === "partial").length;
-  return rejectCount === 0 && partialCount <= 1;
+/** How hard a split panel counts against the average — see
+ * `computePanelScorePercent`'s own doc comment for why this exists at all. */
+const PANEL_DISAGREEMENT_PENALTY_FACTOR = 0.2;
+
+/** A real 0-100 number computed from the panel's own three independent
+ * scores — not a percentage Claude invents, and not derived from the six
+ * objection pass/partial/reject statuses either (those stay purely
+ * diagnostic; see `cvOptimizerObjectionSchema`).
+ *
+ * Two steps:
+ * 1. **The mean** of the three panelists' scores — the straightforward
+ *    "what does the panel think, on average" number.
+ * 2. **A disagreement penalty**: a panel that's split (say 85/80/40) is a
+ *    genuinely riskier bet than one that's unanimous at the same average
+ *    (68/68/69) — a real hiring committee that can't agree is itself a
+ *    yellow flag, not noise to average away. Subtract
+ *    {@link PANEL_DISAGREEMENT_PENALTY_FACTOR} times the spread (max - min)
+ *    from the mean to make that disagreement count.
+ *
+ * Rounded and clamped to [0, 100] — the spread penalty alone can't push the
+ * mean out of range, but rounding could tip it to 101 or -1 at the edges. */
+export function computePanelScorePercent(panelScores: CvOptimizerPanelScore[]): number {
+  if (panelScores.length === 0) return 0;
+
+  const scores = panelScores.map((p) => p.score);
+  const mean = scores.reduce((sum, s) => sum + s, 0) / scores.length;
+  const spread = Math.max(...scores) - Math.min(...scores);
+  const adjusted = mean - PANEL_DISAGREEMENT_PENALTY_FACTOR * spread;
+
+  return Math.max(0, Math.min(100, Math.round(adjusted)));
 }
 
-/** Per-status points for the plain arithmetic mean below — the "purely
- * mathematical" half of `computeObjectionsScorePercent`. Symmetric on
- * purpose (partial sits exactly halfway between pass and reject): any
- * asymmetry belongs in the panel-weight half, not smuggled in here. */
-const OBJECTION_POINTS: Record<CvOptimizerObjectionStatus, number> = { pass: 100, partial: 50, reject: 0 };
+/** Where the combined panel score (see `computePanelScorePercent`) tips from
+ * a reject into a pass — deliberately well above the midpoint, not just
+ * "better than half": this evaluation is meant to be a hard bar, not a coin
+ * flip. */
+export const CV_PASS_SCORE_THRESHOLD = 70;
 
-/** How much worse the panel treats one outright reject than the arithmetic
- * mean already accounts for — the panel's framing is that a reject is a
- * hard no, not just "twice as bad as a partial" (see `meetsPanelPassBar`'s
- * own doc comment). Same 20-point figure the previous per-count formula
- * used for its reject penalty, now applied as a continuous adjustment on
- * the raw mean instead of a hardcoded band offset. */
-const REJECT_PANEL_PENALTY = 20;
-
-/** A real, defensible 0-100 number computed from the six objection verdicts
- * in two steps — not a percentage Claude invents:
- *
- * 1. **The math**: a plain arithmetic mean of the six statuses
- *    (pass=100, partial=50, reject=0). This is the only place granularity
- *    comes from, so two reports rarely land on the exact same round number
- *    just because they share a reject/partial count.
- *
- * 2. **The panel weight**: two adjustments the panel's own rules put on top
- *    of that raw mean, mirroring `meetsPanelPassBar` exactly —
- *    - an extra {@link REJECT_PANEL_PENALTY} points off per outright reject,
- *      because the panel treats "hard no" as categorically worse than
- *      "borderline", not just worse by the 50-point gap the mean alone
- *      already gives it (this is what keeps `oneReject` scoring below
- *      `twoPartialsNoReject` even though both have the same raw mean);
- *    - a rescale into one of two bands that never overlap: PASS [85, 100],
- *      reachable only when the CV actually clears the panel's bar (a clean
- *      sweep scores 100; the one tolerated partial still lands at 85), and
- *      FAIL [0, 65] for everything else — strictly below the pass band's
- *      floor so the gauge can never disagree with a Rejected verdict at a
- *      glance. A plain average alone let a CV with two partials and no
- *      rejects land at 83, right next to a "Rejected" stamp: a number a
- *      reader reasonably reads as good, contradicting the verdict beside
- *      it. That undermined trust in the score more than a low number ever
- *      would, so the rescale — not the mean — is what enforces the bar. */
-export function computeObjectionsScorePercent(objections: CvOptimizerObjection[]): number {
-  const n = objections.length;
-  if (n === 0) return 0;
-
-  const rejectCount = objections.filter((o) => o.status === "reject").length;
-
-  // Step 1 — the math: the panel's raw arithmetic mean, no banding yet.
-  const rawMean = objections.reduce((sum, o) => sum + OBJECTION_POINTS[o.status], 0) / n;
-
-  if (meetsPanelPassBar(objections)) {
-    // Passing combos only ever land in [(n-1)/n, 1] of the way to 100 (at
-    // most the one tolerated partial, zero rejects) — rescale that narrow
-    // range onto the pass band.
-    const passFloorRaw = (100 * (n - 1) + 50) / n;
-    const t = (rawMean - passFloorRaw) / (100 - passFloorRaw);
-    return Math.round(85 + t * 15);
-  }
-
-  // Step 2 — the panel weight: the extra reject penalty, then a rescale of
-  // whatever's left onto the fail band. `failCeilingRaw` is the highest raw
-  // mean any failing combo can reach before the penalty (either n-1 passes
-  // plus one reject, or n-2 passes plus two partials both average to the
-  // same (n-1)/n) — provably never exceeded by a failing combo, so the
-  // ratio below never exceeds 1.
-  const failCeilingRaw = (100 * (n - 1)) / n;
-  const weighted = Math.max(0, rawMean - REJECT_PANEL_PENALTY * rejectCount);
-  return Math.round((weighted / failCeilingRaw) * 65);
-}
-
-/** Whether Claude's own top-level verdict actually agrees with the six
- * objection statuses it just scored — same bar `computeObjectionsScorePercent`
- * bands its score around (see `meetsPanelPassBar`). A `verdict` is generated
- * independently (it's Claude's own field, not derived), so this is a
- * server-side sanity check to log when the two disagree — never used to
- * silently rewrite the verdict, since doing so would leave
- * `verdictReasoning`'s prose arguing for the verdict that got overwritten. */
-export function isVerdictConsistentWithObjections(
-  verdict: CvOptimizerVerdict,
-  objections: CvOptimizerObjection[],
-): boolean {
-  return verdict === (meetsPanelPassBar(objections) ? "pass" : "reject");
+/** The verdict is always this — a pure function of the score, computed
+ * server-side right after Claude responds (see llm.ts's `generateReport`),
+ * never authored by Claude directly. This is what makes "a score that reads
+ * as good sitting next to a Reject stamp" structurally impossible now,
+ * instead of something a banding function has to work backward from. */
+export function computeVerdictFromPanelScore(panelScorePercent: number): CvOptimizerVerdict {
+  return panelScorePercent >= CV_PASS_SCORE_THRESHOLD ? "pass" : "reject";
 }

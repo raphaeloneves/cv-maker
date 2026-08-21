@@ -1,130 +1,65 @@
 import { describe, expect, it } from "vitest";
-import type { CvOptimizerObjection, CvOptimizerObjectionStatus } from "./cv-optimizer.js";
-import { computeObjectionsScorePercent, isVerdictConsistentWithObjections } from "./cv-optimizer.js";
+import type { CvOptimizerPanelRole, CvOptimizerPanelScore } from "./cv-optimizer.js";
+import { computePanelScorePercent, computeVerdictFromPanelScore, CV_PASS_SCORE_THRESHOLD } from "./cv-optimizer.js";
 
-/** Six-objection fixtures only ever care about the `status` distribution —
- * the other fields are irrelevant to score/verdict math, so this fills them
- * with placeholders rather than making every test spell out a full
- * objection object. */
-function objections(statuses: CvOptimizerObjectionStatus[]): CvOptimizerObjection[] {
-  return statuses.map((status, i) => ({
-    key: "wasting_time",
-    status,
-    summary: `objection ${i}`,
-    analysis: "",
-    examples: [],
-    actionItems: [],
-  }));
+/** Fixtures only ever care about the `score` distribution — `role`/
+ * `rationale` are irrelevant to the score math, so this fills them with
+ * placeholders rather than making every test spell out a full panel score
+ * object. */
+function panelScores(scores: number[]): CvOptimizerPanelScore[] {
+  const roles: CvOptimizerPanelRole[] = ["resume_writer", "career_coach", "recruiter"];
+  return scores.map((score, i) => ({ role: roles[i % roles.length] as CvOptimizerPanelRole, score, rationale: `panelist ${i}` }));
 }
 
-describe("computeObjectionsScorePercent", () => {
-  it("scores a clean sweep at 100", () => {
-    expect(computeObjectionsScorePercent(objections(["pass", "pass", "pass", "pass", "pass", "pass"]))).toBe(100);
+describe("computePanelScorePercent", () => {
+  it("returns the plain mean when the panel is unanimous", () => {
+    expect(computePanelScorePercent(panelScores([70, 70, 70]))).toBe(70);
+    expect(computePanelScorePercent(panelScores([100, 100, 100]))).toBe(100);
+    expect(computePanelScorePercent(panelScores([0, 0, 0]))).toBe(0);
   });
 
-  it("scores the one partial the panel's bar still tolerates at 85, not a middling average", () => {
-    expect(computeObjectionsScorePercent(objections(["pass", "pass", "pass", "pass", "pass", "partial"]))).toBe(85);
+  it("scores a split panel below a unanimous panel with the same mean", () => {
+    const unanimous = computePanelScorePercent(panelScores([68, 68, 69]));
+    const split = computePanelScorePercent(panelScores([85, 80, 40]));
+    // Same rough mean (~68.3 vs ~68.3), but the split panel's 45-point
+    // spread should pull it well below the unanimous one.
+    expect(split).toBeLessThan(unanimous);
   });
 
-  it("keeps a real-world case from this app's own bug report — four passes and two partials, zero rejects — strictly below the pass band, not the naive 83 a plain average would produce", () => {
-    const score = computeObjectionsScorePercent(
-      objections(["pass", "pass", "partial", "pass", "partial", "pass"]),
-    );
-    expect(score).toBeLessThan(85);
-    expect(score).toBe(65);
+  it("applies exactly a 0.2x-of-spread penalty on top of the mean", () => {
+    // mean = (85 + 80 + 40) / 3 = 68.33; spread = 85 - 40 = 45
+    // adjusted = 68.33 - 0.2 * 45 = 59.33 -> rounds to 59
+    expect(computePanelScorePercent(panelScores([85, 80, 40]))).toBe(59);
   });
 
-  it("drops further as partials pile up, but never below the reject band's ceiling", () => {
-    const threePartials = computeObjectionsScorePercent(objections(["pass", "pass", "pass", "partial", "partial", "partial"]));
-    const fourPartials = computeObjectionsScorePercent(objections(["pass", "pass", "partial", "partial", "partial", "partial"]));
-    expect(threePartials).toBeLessThan(65);
-    expect(fourPartials).toBeLessThan(threePartials);
+  it("never drops below 0 even when the penalty would push a low mean negative", () => {
+    expect(computePanelScorePercent(panelScores([5, 0, 100]))).toBeGreaterThanOrEqual(0);
   });
 
-  it("caps a CV with any outright reject well below the pass-eligible partial-only band", () => {
-    const oneReject = computeObjectionsScorePercent(objections(["pass", "pass", "pass", "pass", "pass", "reject"]));
-    const twoPartialsNoReject = computeObjectionsScorePercent(
-      objections(["pass", "pass", "partial", "pass", "partial", "pass"]),
-    );
-    expect(oneReject).toBeLessThan(twoPartialsNoReject);
-  });
-
-  it("scores worse as rejects pile up, floored at 0", () => {
-    const oneReject = computeObjectionsScorePercent(objections(["pass", "pass", "pass", "pass", "pass", "reject"]));
-    const allRejects = computeObjectionsScorePercent(objections(["reject", "reject", "reject", "reject", "reject", "reject"]));
-    expect(allRejects).toBeLessThan(oneReject);
-    expect(allRejects).toBe(0);
-  });
-
-  it("never produces a number in the gap between the fail band's ceiling and the pass band's floor", () => {
-    // Every reachable combination of six pass/partial/reject statuses.
-    const statuses: CvOptimizerObjectionStatus[] = ["pass", "partial", "reject"];
-    for (let mask = 0; mask < 3 ** 6; mask++) {
-      const combo: CvOptimizerObjectionStatus[] = [];
-      let m = mask;
-      for (let i = 0; i < 6; i++) {
-        // m % 3 is always 0, 1, or 2 — a valid index into the 3-element array.
-        combo.push(statuses[m % 3] as CvOptimizerObjectionStatus);
-        m = Math.floor(m / 3);
-      }
-      const score = computeObjectionsScorePercent(objections(combo));
-      expect(score <= 65 || score >= 85).toBe(true);
-    }
-  });
-
-  it("weighs an outright reject as strictly worse than the arithmetic mean alone would, not just the 50-point gap pass/partial/reject points already give it", () => {
-    // Both combos below share the exact same raw mean (four passes' worth of
-    // points out of six) — a plain average can't tell them apart. The panel
-    // weight (the extra per-reject penalty) is what has to.
-    const oneReject = computeObjectionsScorePercent(objections(["pass", "pass", "pass", "pass", "pass", "reject"]));
-    const twoPartialsNoReject = computeObjectionsScorePercent(
-      objections(["pass", "pass", "partial", "pass", "partial", "pass"]),
-    );
-    expect(oneReject).toBe(49);
-    expect(twoPartialsNoReject).toBe(65);
-  });
-
-  it("spreads the fail band across far more than a handful of round multiples of 5 or 10", () => {
-    // The old per-count lookup table could only ever land on {0, 5, 10, ...,
-    // 65} — ten values, every one a multiple of 5. The arithmetic-mean-based
-    // formula should do meaningfully better than that on both counts.
-    const statuses: CvOptimizerObjectionStatus[] = ["pass", "partial", "reject"];
-    const failScores = new Set<number>();
-    for (let mask = 0; mask < 3 ** 6; mask++) {
-      const combo: CvOptimizerObjectionStatus[] = [];
-      let m = mask;
-      for (let i = 0; i < 6; i++) {
-        combo.push(statuses[m % 3] as CvOptimizerObjectionStatus);
-        m = Math.floor(m / 3);
-      }
-      const objs = objections(combo);
-      if (isVerdictConsistentWithObjections("reject", objs)) {
-        failScores.add(computeObjectionsScorePercent(objs));
-      }
-    }
-    expect(failScores.size).toBeGreaterThan(10);
-    const nonMultiplesOf5 = [...failScores].filter((score) => score % 5 !== 0);
-    expect(nonMultiplesOf5.length).toBeGreaterThan(0);
+  it("returns 0 for an empty panel rather than throwing or dividing by zero", () => {
+    expect(computePanelScorePercent([])).toBe(0);
   });
 });
 
-describe("isVerdictConsistentWithObjections", () => {
-  it("agrees with reject when two objections are only partial, even with no outright reject", () => {
-    const objs = objections(["pass", "pass", "partial", "pass", "partial", "pass"]);
-    expect(isVerdictConsistentWithObjections("reject", objs)).toBe(true);
-    expect(isVerdictConsistentWithObjections("pass", objs)).toBe(false);
+describe("computeVerdictFromPanelScore", () => {
+  it(`passes at or above the ${CV_PASS_SCORE_THRESHOLD}-point threshold`, () => {
+    expect(computeVerdictFromPanelScore(CV_PASS_SCORE_THRESHOLD)).toBe("pass");
+    expect(computeVerdictFromPanelScore(100)).toBe("pass");
   });
 
-  it("agrees with pass for a clean sweep or a single partial", () => {
-    const cleanSweep = objections(["pass", "pass", "pass", "pass", "pass", "pass"]);
-    const onePartial = objections(["pass", "pass", "pass", "pass", "pass", "partial"]);
-    expect(isVerdictConsistentWithObjections("pass", cleanSweep)).toBe(true);
-    expect(isVerdictConsistentWithObjections("pass", onePartial)).toBe(true);
+  it(`rejects below the ${CV_PASS_SCORE_THRESHOLD}-point threshold`, () => {
+    expect(computeVerdictFromPanelScore(CV_PASS_SCORE_THRESHOLD - 1)).toBe("reject");
+    expect(computeVerdictFromPanelScore(0)).toBe("reject");
   });
 
-  it("agrees with reject whenever any objection is an outright reject", () => {
-    const objs = objections(["pass", "pass", "pass", "pass", "pass", "reject"]);
-    expect(isVerdictConsistentWithObjections("reject", objs)).toBe(true);
-    expect(isVerdictConsistentWithObjections("pass", objs)).toBe(false);
+  it("can never disagree with computePanelScorePercent's own output by construction", () => {
+    // The verdict is a pure function of the score, so for any panel there is
+    // exactly one right answer — no separate "does the verdict agree with
+    // the scorecard" check is possible or needed anymore.
+    for (const scores of [[90, 90, 90], [70, 70, 70], [69, 69, 69], [30, 40, 20], [100, 0, 0]]) {
+      const score = computePanelScorePercent(panelScores(scores));
+      const verdict = computeVerdictFromPanelScore(score);
+      expect(verdict).toBe(score >= CV_PASS_SCORE_THRESHOLD ? "pass" : "reject");
+    }
   });
 });

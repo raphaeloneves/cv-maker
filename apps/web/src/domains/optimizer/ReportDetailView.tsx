@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { computeObjectionsScorePercent, isEligibleForCvRewrite } from "@cv-maker/contracts";
+import { computePanelScorePercent, isEligibleForCvRewrite } from "@cv-maker/contracts";
 import type {
   BuilderLocale,
   CvOptimizerObjection,
   CvOptimizerObjectionKey,
   CvOptimizerObjectionStatus,
+  CvOptimizerPanelScore,
   CvOptimizerPriorityAction,
   CvOptimizerReport,
   CvOptimizerReportContent,
@@ -95,34 +96,58 @@ function SectionHeading({ heading, subheading }: { heading: string; subheading?:
 }
 
 function VerdictHero({ content, locale }: { content: CvOptimizerReportContent; locale: BuilderLocale }) {
-  const score = computeObjectionsScorePercent(content.objections);
+  const score = computePanelScorePercent(content.panelScores);
   const isPass = content.verdict === "pass";
   return (
     <Card
       className={clsx(
-        "flex flex-col items-center gap-6 p-8 text-center sm:flex-row sm:items-center sm:text-left",
+        "flex flex-col gap-6 p-8",
         isPass ? "bg-success/5" : "bg-danger/5",
       )}
     >
-      <p
-        className={clsx(
-          "flex-1 border-l-2 pl-4 text-lg font-medium leading-snug text-heading",
-          isPass ? "border-l-success/40" : "border-l-danger/40",
-        )}
-      >
-        {content.verdictReasoning}
-      </p>
-      {/* Stamp above the gauge, as one centered two-row unit — not spread
-          out across the card's full width next to the text. */}
-      <div className="flex shrink-0 flex-col items-center gap-3">
-        <VerdictStamp verdict={content.verdict} locale={locale} animate />
-        <ScoreGauge
-          score={score}
-          label={t(locale, "optimizer.detail.score.label")}
-          tooltip={t(locale, "optimizer.detail.score.explanation")}
-        />
+      <div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:items-center sm:text-left">
+        <p
+          className={clsx(
+            "flex-1 border-l-2 pl-4 text-lg font-medium leading-snug text-heading",
+            isPass ? "border-l-success/40" : "border-l-danger/40",
+          )}
+        >
+          {content.verdictReasoning}
+        </p>
+        {/* Stamp above the gauge, as one centered two-row unit — not spread
+            out across the card's full width next to the text. */}
+        <div className="flex shrink-0 flex-col items-center gap-3">
+          <VerdictStamp verdict={content.verdict} locale={locale} animate />
+          <ScoreGauge
+            score={score}
+            label={t(locale, "optimizer.detail.score.label")}
+            tooltip={t(locale, "optimizer.detail.score.explanation")}
+          />
+        </div>
       </div>
+      <PanelBreakdown panelScores={content.panelScores} locale={locale} />
     </Card>
+  );
+}
+
+/** Each of the three panelists' own independent 0-100 read, laid out below
+ * the combined gauge above — the whole point of asking them separately (see
+ * computePanelScorePercent's own doc comment) is lost if only the blended
+ * number ever reaches the page. A split panel should be visibly a split
+ * panel, not just a slightly lower gauge. */
+function PanelBreakdown({ panelScores, locale }: { panelScores: CvOptimizerPanelScore[]; locale: BuilderLocale }) {
+  return (
+    <div className="grid gap-3 border-t border-[var(--border-on-light)] pt-6 sm:grid-cols-3">
+      {panelScores.map((p) => (
+        <div key={p.role} className="rounded-md border border-[var(--border-on-light)] bg-surface-card p-4">
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="text-sm font-semibold text-heading">{t(locale, `optimizer.detail.panel.${p.role}`)}</p>
+            <p className="font-display text-lg font-bold text-heading">{p.score}</p>
+          </div>
+          <p className="mt-1 text-xs text-text-muted">{p.rationale}</p>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -375,7 +400,7 @@ function RewriteCta({ report, locale }: { report: CvOptimizerReport; locale: Bui
   });
 
   if (!report.reportContent) return null;
-  const score = computeObjectionsScorePercent(report.reportContent.objections);
+  const score = computePanelScorePercent(report.reportContent.panelScores);
 
   if (report.rewriteStatus === "pending" || report.rewriteStatus === "processing") {
     return (

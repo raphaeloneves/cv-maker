@@ -1,5 +1,5 @@
 import type { CvOptimizerReport, CvOptimizerReportStatus, CvOptimizerReportSummary } from "@cv-maker/contracts";
-import { computeObjectionsScorePercent } from "@cv-maker/contracts";
+import { computePanelScorePercent } from "@cv-maker/contracts";
 import { db } from "../../db.js";
 import { enumToDb, enumToDomain } from "../common/enum-map.js";
 import type { CvOptimizerReportStatus as PrismaCvOptimizerReportStatus } from "../../../generated/client/index.js";
@@ -33,7 +33,11 @@ export function reportToSummary(row: Row): CvOptimizerReportSummary {
   return {
     ...report,
     verdict: content?.verdict ?? null,
-    objectionsScorePercent: content ? computeObjectionsScorePercent(content.objections) : null,
+    // `content?.panelScores` guards against reports generated before this
+    // field existed — their stored JSON has no panelScores at all, and a
+    // list endpoint that 500s on one old row breaks every report a user has
+    // is worse than that one row just showing no score.
+    panelScorePercent: content?.panelScores ? computePanelScorePercent(content.panelScores) : null,
   };
 }
 

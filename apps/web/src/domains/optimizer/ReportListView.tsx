@@ -128,8 +128,8 @@ function VerdictAccent({ verdict }: { verdict: "pass" | "reject" }) {
 
 function ReportCardBody({ report, locale }: { report: CvOptimizerReportSummary; locale: BuilderLocale }) {
   if (report.status === "completed") {
-    return report.objectionsScorePercent !== null ? (
-      <ScoreBar score={report.objectionsScorePercent} label={t(locale, "optimizer.detail.score.label")} />
+    return report.panelScorePercent !== null ? (
+      <ScoreBar score={report.panelScorePercent} label={t(locale, "optimizer.detail.score.label")} />
     ) : null;
   }
   if (report.status === "failed") {
