@@ -18,8 +18,8 @@ const frameworkSteps = ["step1", "step2", "step3", "step4"] as const;
 const basicFeatures = [
   { key: "autosave", icon: "save" },
   { key: "templates", icon: "layout" },
-  { key: "inclusive", icon: "user" },
-  { key: "bilingual", icon: "globe" },
+  { key: "photoEditor", icon: "crop" },
+  { key: "printControl", icon: "sliders" },
   { key: "honest", icon: "route" },
   { key: "export", icon: "download" },
 ] as const;
@@ -63,6 +63,8 @@ const ICONS: Record<string, string> = {
   globe: '<circle cx="12" cy="12" r="8"/><path d="M4 12h16"/><path d="M12 4c2.5 2.5 2.5 13.5 0 16M12 4c-2.5 2.5-2.5 13.5 0 16"/>',
   route: '<circle cx="6" cy="6" r="2.2"/><circle cx="18" cy="18" r="2.2"/><path d="M6 8.2V13a4 4 0 0 0 4 4h3.5"/>',
   panel: '<circle cx="9" cy="10" r="5"/><circle cx="15" cy="10" r="5"/><circle cx="12" cy="16" r="5"/>',
+  crop: '<path d="M6 3v13a2 2 0 0 0 2 2h13"/><path d="M18 21V8a2 2 0 0 0-2-2H3"/>',
+  sliders: '<path d="M4 7h10M18 7h2"/><circle cx="16" cy="7" r="2"/><path d="M4 17h2M10 17h10"/><circle cx="8" cy="17" r="2"/>',
   download: '<path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 19h14"/>',
   check: '<path d="M20 6 9 17l-5-5"/>',
   x: '<path d="M18 6 6 18M6 6l12 12"/>',
