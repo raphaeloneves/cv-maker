@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { t } from "@/i18n";
+import type { BuilderLocale } from "@cv-maker/contracts";
 import { DEFAULT_LOCALE } from "@/lib/locale";
 const locale = DEFAULT_LOCALE;
 
@@ -15,13 +16,16 @@ const painRows = ["row1", "row2", "row3", "row4", "row5"] as const;
 
 const frameworkSteps = ["step1", "step2", "step3", "step4"] as const;
 
+// The platform's four pillars — merges what used to be a separate, much
+// longer "CV Optimizer" section into one card here (see vignette() below;
+// optimizerReport reuses that section's own screenshot placeholder
+// verbatim), plus the "basics strip" collapsing from six minor conveniences
+// down to the two that actually differentiate the templates themselves.
 const basicFeatures = [
-  { key: "autosave", icon: "save" },
-  { key: "templates", icon: "layout" },
-  { key: "photoEditor", icon: "crop" },
-  { key: "printControl", icon: "sliders" },
-  { key: "honest", icon: "route" },
-  { key: "export", icon: "download" },
+  { key: "atsHuman", icon: "route" },
+  { key: "coachingTemplates", icon: "layout" },
+  { key: "optimizerReport", icon: "panel" },
+  { key: "academy", icon: "academy" },
 ] as const;
 
 const freeFeatures = ["cvs", "sections", "templates", "export", "autosave"] as const;
@@ -66,6 +70,7 @@ const ICONS: Record<string, string> = {
   crop: '<path d="M6 3v13a2 2 0 0 0 2 2h13"/><path d="M18 21V8a2 2 0 0 0-2-2H3"/>',
   sliders: '<path d="M4 7h10M18 7h2"/><circle cx="16" cy="7" r="2"/><path d="M4 17h2M10 17h10"/><circle cx="8" cy="17" r="2"/>',
   download: '<path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 19h14"/>',
+  academy: '<path d="M4 5.5C4 4.67 4.67 4 5.5 4H12v16H5.5A1.5 1.5 0 0 1 4 18.5v-13Z"/><path d="M20 5.5C20 4.67 19.33 4 18.5 4H12v16h6.5a1.5 1.5 0 0 0 1.5-1.5v-13Z"/>',
   check: '<path d="M20 6 9 17l-5-5"/>',
   x: '<path d="M18 6 6 18M6 6l12 12"/>',
   arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
@@ -73,6 +78,79 @@ const ICONS: Record<string, string> = {
 
 function icon(name: string, color = "var(--orange)", size = 20) {
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
+}
+
+/** A dashed-border "drop a real screenshot in here" box, same convention as
+ * the hero's own screenshot placeholder — for the two flagship features
+ * (the actual report, the actual Academy lesson view) a real capture sells
+ * it better than an abstract animation invented for UI this file can't see.
+ * `note` ships as a literal HTML comment (visible in page source only) so
+ * whoever captures the real asset later finds the same instructions the
+ * hero's placeholder already uses. */
+function screenshotPlaceholder(filename: string, note: string): string {
+  return `
+    <!-- SCREENSHOT PLACEHOLDER — replace this div with:
+      <img src="/images/marketing/${filename}" alt="" class="h-full w-full rounded-md object-cover object-top" />
+      Capture: ${note}
+      Save to apps/web/public/images/marketing/${filename}. -->
+    <div
+      class="flex h-full w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed border-[var(--border-on-light)]"
+      style="background-image: repeating-linear-gradient(135deg, var(--surface-card) 0, var(--surface-card) 1px, transparent 1px, transparent 12px); background-color: var(--surface-page);"
+    >
+      ${icon("layout", "#9aa5ba", 28)}
+      <p class="mono-label text-center text-[10px] text-[#9aa5ba]">Screenshot placeholder<br />${filename}</p>
+    </div>`;
+}
+
+/** One small looping animation — or, for the two flagship features, a real
+ * screenshot placeholder — per feature card (see the "Feature showcase
+ * vignettes" comment in global.css). Shows the feature happening rather
+ * than just naming it, the same idea as jitter.video's "Made to scale"
+ * section demoing each capability live instead of with a static icon. */
+function vignette(key: (typeof basicFeatures)[number]["key"], locale: BuilderLocale): string {
+  switch (key) {
+    case "atsHuman":
+      // The same two floating badges the hero already uses (identical
+      // copy, identical `data-animate="float"` loop) — a deliberate echo
+      // rather than a new animation, since this card is making the exact
+      // claim those badges already make.
+      return `
+        <div class="relative flex h-16 w-16 items-center justify-center rounded-md border border-[var(--border-on-light)] bg-white">
+          ${icon("layout", "#c9d2e3", 26)}
+          <div data-animate="float" class="absolute -left-4 -top-3 flex items-center gap-1.5 rounded-pill bg-navy-deep px-2.5 py-1 shadow-lg">
+            ${icon("check", "var(--orange-warm)", 11)}<span class="whitespace-nowrap text-[9px] font-semibold text-white" data-i18n="marketing.hero.badge.ats">${t(locale, "marketing.hero.badge.ats")}</span>
+          </div>
+          <div data-animate="float" style="animation-delay:-2.6s" class="absolute -bottom-3 -right-6 flex items-center gap-1.5 rounded-pill bg-navy-deep px-2.5 py-1 shadow-lg">
+            ${icon("user", "var(--success)", 11)}<span class="whitespace-nowrap text-[9px] font-semibold text-white" data-i18n="marketing.hero.badge.human">${t(locale, "marketing.hero.badge.human")}</span>
+          </div>
+        </div>`;
+    case "coachingTemplates":
+      return `
+        <div class="flex items-center gap-3">
+          ${["var(--orange)", "var(--navy-mid)", "var(--orange-warm)"]
+            .map(
+              (accent, i) => `
+            <div class="vig-cycle flex h-16 w-11 flex-col overflow-hidden rounded-md border-2 bg-white shadow-sm" style="--vig-cycle-n:3; --vig-cycle-i:${i}; border-color: var(--border-on-light);">
+              <div class="h-3 w-full" style="background:${accent}"></div>
+              <div class="flex-1 space-y-1 p-1.5">
+                <div class="h-1 w-full rounded-full bg-[#e7ebf2]"></div>
+                <div class="h-1 w-2/3 rounded-full bg-[#e7ebf2]"></div>
+              </div>
+            </div>`,
+            )
+            .join("")}
+        </div>`;
+    case "optimizerReport":
+      return screenshotPlaceholder(
+        "optimizer-report-verdict.png",
+        "the verdict + score gauge section of a completed report (/optimizer/[id]), ~1200x900px",
+      );
+    case "academy":
+      return screenshotPlaceholder(
+        "academy-lesson.png",
+        "a completed Academy lesson page (/academy), ~1200x900px",
+      );
+  }
 }
 
 const STAR_PATH =
@@ -383,135 +461,56 @@ const softwareAppJsonLd = {
     </div>
   </section>
 
-  <!-- ============================ OPTIMIZER ============================ -->
-  <section id="optimizer" data-surface="light" class="scroll-mt-16 relative overflow-hidden bg-surface-page px-5 py-20 sm:px-8 sm:py-28">
-    <div class="relative mx-auto max-w-2xl text-center" data-animate="fade-up">
-      <p class="eyebrow text-xs text-orange" data-i18n="marketing.optimizer.eyebrow">{t(locale, "marketing.optimizer.eyebrow")}</p>
-      <h2 class="mt-3 font-display text-3xl font-extrabold tracking-tight text-heading sm:text-4xl" data-i18n="marketing.optimizer.title">
-        {t(locale, "marketing.optimizer.title")}
-      </h2>
-      <p class="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-text-muted" data-i18n="marketing.optimizer.subtitle">
-        {t(locale, "marketing.optimizer.subtitle")}
-      </p>
-    </div>
-
-    <!-- Feature row: verdict pitch + report screenshot -->
-    <div class="mx-auto mt-16 grid max-w-6xl items-center gap-12 lg:grid-cols-2">
-      <div data-animate="fade-up" class="order-2 lg:order-1">
-        <span class="flex h-11 w-11 items-center justify-center rounded-md border border-[var(--border-on-light)]" set:html={icon("check")} />
-        <h3 class="mt-4 font-display text-2xl font-bold text-heading" data-i18n="marketing.optimizer.verdict.title">
-          {t(locale, "marketing.optimizer.verdict.title")}
-        </h3>
-        <p class="mt-3 text-sm leading-relaxed text-text-muted" data-i18n="marketing.optimizer.verdict.body">
-          {t(locale, "marketing.optimizer.verdict.body")}
-        </p>
-      </div>
-      <div data-animate="fade-up" class="order-1 lg:order-2">
-        <div class="rounded-lg border border-[var(--border-on-light)] bg-surface-card p-2.5 shadow-xl shadow-black/5 transition-transform duration-standard ease-standard hover:-translate-y-1">
-          <div class="mono-label flex items-center gap-1.5 px-2 pb-2 pt-1 text-[9px] text-text-muted" data-i18n="marketing.optimizer.screenshot.verdict.badge">
-            {t(locale, "marketing.optimizer.screenshot.verdict.badge")}
-          </div>
-          <!--
-            SCREENSHOT PLACEHOLDER — replace this div with:
-              <img src="/images/marketing/optimizer-report-verdict.png" alt="" class="aspect-[4/3] w-full rounded-b-md object-cover object-top" />
-            Capture: the verdict + score gauge section of a completed report
-            (/optimizer/[id]), ~1200x900px, save to
-            apps/web/public/images/marketing/optimizer-report-verdict.png.
-          -->
-          <div
-            class="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-b-md border border-dashed border-[var(--border-on-light)]"
-            style="background-image: repeating-linear-gradient(135deg, var(--surface-sunken) 0, var(--surface-sunken) 1px, transparent 1px, transparent 12px);"
-          >
-            <span set:html={icon("layout", "#9aa5ba", 28)} />
-            <p class="mono-label text-center text-[10px] text-[#9aa5ba]">Screenshot placeholder<br />optimizer-report-verdict.png</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Panel scoring + priority actions + rewrite -->
-    <div class="mx-auto mt-14 grid max-w-5xl gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      <div
-        data-animate="fade-up"
-        class="rounded-lg border border-[var(--border-on-light)] bg-surface-card p-6 transition-all duration-standard ease-standard hover:-translate-y-1 hover:shadow-lg"
-      >
-        <span class="flex h-11 w-11 items-center justify-center rounded-md border border-[var(--border-on-light)]" set:html={icon("panel")} />
-        <h3 class="mt-4 font-display text-lg font-bold text-heading" data-i18n="marketing.optimizer.panel.title">
-          {t(locale, "marketing.optimizer.panel.title")}
-        </h3>
-        <p class="mt-2 text-sm leading-relaxed text-text-muted" data-i18n="marketing.optimizer.panel.body">
-          {t(locale, "marketing.optimizer.panel.body")}
-        </p>
-      </div>
-      <div
-        data-animate="fade-up"
-        style="transition-delay: 60ms"
-        class="rounded-lg border border-[var(--border-on-light)] bg-surface-card p-6 transition-all duration-standard ease-standard hover:-translate-y-1 hover:shadow-lg"
-      >
-        <span class="flex h-11 w-11 items-center justify-center rounded-md border border-[var(--border-on-light)]" set:html={icon("route")} />
-        <h3 class="mt-4 font-display text-lg font-bold text-heading" data-i18n="marketing.optimizer.actions.title">
-          {t(locale, "marketing.optimizer.actions.title")}
-        </h3>
-        <p class="mt-2 text-sm leading-relaxed text-text-muted" data-i18n="marketing.optimizer.actions.body">
-          {t(locale, "marketing.optimizer.actions.body")}
-        </p>
-      </div>
-      <div
-        data-animate="fade-up"
-        style="transition-delay: 120ms"
-        class="rounded-lg border border-orange/30 bg-surface-card p-6 transition-all duration-standard ease-standard hover:-translate-y-1 hover:shadow-lg"
-      >
-        <span class="flex h-11 w-11 items-center justify-center rounded-md border border-[var(--border-on-light)]" set:html={icon("layout")} />
-        <h3 class="mt-4 font-display text-lg font-bold text-heading" data-i18n="marketing.optimizer.rewrite.title">
-          {t(locale, "marketing.optimizer.rewrite.title")}
-        </h3>
-        <p class="mt-2 text-sm leading-relaxed text-text-muted" data-i18n="marketing.optimizer.rewrite.body">
-          {t(locale, "marketing.optimizer.rewrite.body")}
-        </p>
-      </div>
-    </div>
-
-    <div class="mt-14 flex justify-center" data-animate="fade-up">
-      <a
-        href="/signup"
-        data-i18n="marketing.optimizer.cta"
-        class="inline-flex items-center rounded-md bg-orange px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-orange/0 transition-all duration-standard ease-standard hover:-translate-y-0.5 hover:bg-accent-hover hover:shadow-orange/30"
-      >
-        {t(locale, "marketing.optimizer.cta")}
-      </a>
-    </div>
-  </section>
-
   <!-- ========================= BASICS STRIP ========================= -->
-  <section data-surface="light" class="relative overflow-hidden bg-surface-page px-5 py-20 sm:px-8 sm:py-24">
+  <!-- No decorative "drift" blobs here (unlike the other sections), so —
+       unlike them — this section deliberately has no `overflow-hidden`:
+       that property on any ancestor breaks `position: sticky` (the sticky
+       left column below), since it makes the ancestor itself the sticky
+       element's containing block instead of the viewport. -->
+  <section data-surface="light" class="relative bg-surface-page px-5 py-20 sm:px-8 sm:py-24">
     <div class="relative mx-auto max-w-7xl">
-      <div class="mx-auto max-w-2xl text-center" data-animate="fade-up">
-        <p class="eyebrow text-xs text-orange" data-i18n="marketing.features.eyebrow">
-          {t(locale, "marketing.features.eyebrow")}
-        </p>
-        <h2 class="mt-3 font-display text-2xl font-extrabold tracking-tight text-heading sm:text-3xl" data-i18n="marketing.features.title">
-          {t(locale, "marketing.features.title")}
-        </h2>
-        <p class="mt-2 text-sm text-text-muted" data-i18n="marketing.features.subtitle">{t(locale, "marketing.features.subtitle")}</p>
-      </div>
+      <!-- jitter.video's "Made to scale" layout: the intro stays put in a
+           sticky left column (lg+ only — plain CSS position:sticky, no JS)
+           while the feature grid scrolls past it, and each card demos its
+           feature with a small live loop (see vignette() above) instead of
+           a bare icon. -->
+      <div class="grid gap-10 lg:grid-cols-[minmax(0,320px)_1fr] lg:gap-16">
+        <div class="lg:sticky lg:top-24 lg:self-start" data-animate="fade-up">
+          <p class="eyebrow text-xs text-orange" data-i18n="marketing.features.eyebrow">
+            {t(locale, "marketing.features.eyebrow")}
+          </p>
+          <h2 class="mt-3 font-display text-2xl font-extrabold tracking-tight text-heading sm:text-3xl" data-i18n="marketing.features.title">
+            {t(locale, "marketing.features.title")}
+          </h2>
+          <p class="mt-2 text-sm leading-relaxed text-text-muted" data-i18n="marketing.features.subtitle">
+            {t(locale, "marketing.features.subtitle")}
+          </p>
+        </div>
 
-      <div class="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-        {
-          basicFeatures.map((f, i) => (
-            <div data-animate="fade-up" style={`transition-delay:${i * 60}ms`} class="group flex flex-col gap-3">
-              <span
-                class="flex h-11 w-11 items-center justify-center rounded-md border border-[var(--border-on-light)] transition-all duration-standard ease-standard group-hover:-translate-y-0.5 group-hover:border-orange/50 group-hover:bg-orange/5"
-                set:html={icon(f.icon)}
-              />
-              <h3 class="font-display text-base font-bold text-heading" data-i18n={`marketing.features.${f.key}.title`}>
-                {t(locale, `marketing.features.${f.key}.title`)}
-              </h3>
-              <p class="text-sm leading-relaxed text-text-muted" data-i18n={`marketing.features.${f.key}.body`}>
-                {t(locale, `marketing.features.${f.key}.body`)}
-              </p>
-            </div>
-          ))
-        }
+        <div class="grid gap-6 sm:grid-cols-2">
+          {
+            basicFeatures.map((f, i) => (
+              <div
+                data-animate="fade-up"
+                style={`transition-delay:${i * 60}ms`}
+                class="group flex flex-col overflow-hidden rounded-lg border border-[var(--border-on-light)] bg-surface-card transition-all duration-standard ease-standard hover:-translate-y-1 hover:border-orange/30 hover:shadow-lg"
+              >
+                <div class="flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-surface-sunken/60 p-6" set:html={vignette(f.key, locale)} />
+                <div class="flex flex-1 flex-col gap-2 p-5">
+                  <div class="flex items-center gap-2.5">
+                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[var(--border-on-light)] bg-surface-page" set:html={icon(f.icon, "var(--orange)", 14)} />
+                    <h3 class="font-display text-sm font-bold text-heading" data-i18n={`marketing.features.${f.key}.title`}>
+                      {t(locale, `marketing.features.${f.key}.title`)}
+                    </h3>
+                  </div>
+                  <p class="text-sm leading-relaxed text-text-muted" data-i18n={`marketing.features.${f.key}.body`}>
+                    {t(locale, `marketing.features.${f.key}.body`)}
+                  </p>
+                </div>
+              </div>
+            ))
+          }
+        </div>
       </div>
     </div>
   </section>

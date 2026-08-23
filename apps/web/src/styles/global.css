@@ -109,6 +109,36 @@ h1, h2, h3, h4 {
   [data-animate="drift"] { animation: none; }
 }
 
+/* ===== Feature showcase vignettes (homepage "platform pillars" section) =====
+ * A couple of the feature cards get a small, self-contained loop that shows
+ * the feature happening instead of just naming it — same "sparse,
+ * purposeful motion" rule as everything else here: opacity/transform only,
+ * and every one collapses to a single sensible resting frame under
+ * prefers-reduced-motion rather than freezing mid-cycle. The other two
+ * cards (the flagship report, the Academy) use a real screenshot
+ * placeholder instead — see screenshotPlaceholder() in index.astro. */
+
+/* coachingTemplates — N identical items sharing one keyframe, each offset
+ * by a negative delay so exactly one is "active" at a time, in turn (the
+ * three template swatches) — each item sets --vig-cycle-n (total count)
+ * and --vig-cycle-i (its own index) inline. */
+@keyframes vig-cycle-highlight {
+  0%, 6%    { border-color: var(--border-on-light); box-shadow: none; }
+  12%, 25%  { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(232, 100, 12, 0.15); }
+  31%, 100% { border-color: var(--border-on-light); box-shadow: none; }
+}
+.vig-cycle {
+  animation-name: vig-cycle-highlight;
+  animation-duration: calc(var(--vig-cycle-n, 3) * 2.4s);
+  animation-timing-function: var(--ease-standard);
+  animation-iteration-count: infinite;
+  animation-delay: calc(var(--vig-cycle-i, 0) * -2.4s);
+}
+@media (prefers-reduced-motion: reduce) {
+  .vig-cycle { animation: none; }
+  .vig-cycle:first-child { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(232, 100, 12, 0.15); }
+}
+
 /* Slow gradient sweep for the hero's accent headline phrase — a quiet
  * shimmer, not a flashing effect (brand doc motion rule: sparse, purposeful). */
 @keyframes text-shimmer {
