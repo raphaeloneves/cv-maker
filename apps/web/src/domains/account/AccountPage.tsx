@@ -86,7 +86,22 @@ function AccountBody({ user }: { user: AuthUser }) {
         </div>
         <div className="flex items-center justify-between gap-4 border-b border-[var(--border-on-light)] px-6 py-4">
           <span className="text-sm text-text-muted">{t(locale, "account.locale")}</span>
-          <LocaleSwitch current={locale} />
+          {/* `user.locale` — the actual persisted `AuthUser` field from
+              `RequireAuth`'s already-resolved session — not `locale`
+              (`useBuilderLocale()`'s client-cached display preference).
+              cv-optimizer's report/rewrite language is driven by the DB
+              column, so the switch has to compare against and correct
+              *that*, not whatever `localStorage` already happens to show.
+              If the two have drifted apart (see SiteNav.astro's fixed race,
+              which could leave old accounts with exactly this split),
+              comparing against `locale` here would make clicking the
+              option you're already visually on a silent no-op forever —
+              `next === current` trivially true — with no way to ever
+              trigger the `updateLocale` call that would fix it. Comparing
+              against the real server value instead means that same click
+              is recognized as a real change and self-heals the account on
+              the very next click of your own actual language. */}
+          <LocaleSwitch current={user.locale} />
         </div>
         <div className="flex items-center justify-between gap-4 px-6 py-4">
           <span className="text-sm text-text-muted">{t(locale, "account.type")}</span>
