@@ -79,7 +79,12 @@ export const cvOptimizerObjectionSchema = z.object({
   summary: z.string(),
   analysis: z.string(),
   examples: z.array(z.string()),
-  actionItems: z.array(z.string()),
+  // 0-2: narrow, objection-specific tactical fixes only — the deduplicated,
+  // ranked to-do list lives in `priorityActions` below (see that field's own
+  // comment and llm.ts's "HOW FIXES ARE DIVIDED ACROSS THE REPORT"). Capping
+  // this is what keeps six objections from turning into six overlapping
+  // fix-lists on top of the one that actually matters.
+  actionItems: z.array(z.string()).max(2),
 });
 export type CvOptimizerObjection = z.infer<typeof cvOptimizerObjectionSchema>;
 
@@ -129,6 +134,16 @@ export const cvOptimizerPriorityActionSchema = z.object({
 });
 export type CvOptimizerPriorityAction = z.infer<typeof cvOptimizerPriorityActionSchema>;
 
+/** 3-6: the one ranked, deduplicated to-do list a candidate should actually
+ * work through — not a rollup of every objection's own `actionItems`. Capped
+ * on purpose: "as many relevant fixes as possible" is served by making sure
+ * none of the six are redundant with each other, not by letting the count
+ * grow unbounded (see llm.ts's SYSTEM_PROMPT for the instruction that keeps
+ * this list and the objections' own `actionItems` from repeating each
+ * other). */
+export const PRIORITY_ACTIONS_MIN = 3;
+export const PRIORITY_ACTIONS_MAX = 6;
+
 export const cvOptimizerReportContentSchema = z.object({
   // Computed server-side from `panelScores` via `computeVerdictFromPanelScore`
   // right after Claude responds (see llm.ts's `generateReport`), never
@@ -139,13 +154,13 @@ export const cvOptimizerReportContentSchema = z.object({
   verdictReasoning: z.string(),
   framework: cvOptimizerFrameworkAssessmentSchema,
   // Always all six, in the fixed order above.
-  objections: z.array(cvOptimizerObjectionSchema),
+  objections: z.array(cvOptimizerObjectionSchema).length(6),
   // Always exactly three, one per `cvOptimizerPanelRoleSchema` value, in
   // that order — see `computePanelScorePercent`.
   panelScores: z.array(cvOptimizerPanelScoreSchema).length(3),
-  criticalGaps: z.array(cvOptimizerGapSchema),
-  strongestElements: z.array(cvOptimizerStrengthSchema),
-  priorityActions: z.array(cvOptimizerPriorityActionSchema),
+  criticalGaps: z.array(cvOptimizerGapSchema).min(3).max(5),
+  strongestElements: z.array(cvOptimizerStrengthSchema).min(3).max(5),
+  priorityActions: z.array(cvOptimizerPriorityActionSchema).min(PRIORITY_ACTIONS_MIN).max(PRIORITY_ACTIONS_MAX),
   finalAssessment: z.string(),
   nextSteps: z.string(),
 });

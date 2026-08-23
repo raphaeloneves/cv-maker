@@ -14,7 +14,8 @@ import { Button, Card, clsx } from "@/components/ui";
 import { t } from "@/i18n";
 import { withCvId } from "@/lib/use-cv-id";
 import { CheckIcon, WarningIcon, XIcon } from "@/domains/sections/icons.js";
-import { createRewrite, getReport } from "./api";
+import { ApiError } from "@/lib/api-client";
+import { createRewrite, getReport, retryReport } from "./api";
 import { RotatingMessages } from "./RotatingMessages";
 import { ScoreBar } from "./ScoreBar";
 import { VerdictStamp } from "./VerdictStamp";
@@ -542,6 +543,7 @@ function CompletedReport({ report, locale }: { report: CvOptimizerReport; locale
  * status. No fake progress bar during the wait — honesty over theater,
  * matching this app's other long-running-operation copy. */
 export function ReportDetailView({ reportId, locale }: { reportId: string; locale: BuilderLocale }) {
+  const queryClient = useQueryClient();
   const reportQuery = useQuery({
     queryKey: ["optimizer-report", reportId],
     queryFn: () => getReport(reportId),
@@ -561,6 +563,20 @@ export function ReportDetailView({ reportId, locale }: { reportId: string; local
   });
 
   const report = reportQuery.data;
+
+  // Re-runs generation in place (same role/job description/CV already on
+  // the report — see service.ts's retryReport) rather than sending the user
+  // back to /optimizer/new to re-enter everything. Writing the response
+  // straight into the query cache flips `report.status` back to "pending",
+  // which is what makes `refetchInterval` above resume polling on its own.
+  const retryMutation = useMutation({
+    mutationFn: () => retryReport(reportId),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(["optimizer-report", reportId], updated);
+    },
+  });
+  const retryErrorMessage =
+    retryMutation.error instanceof ApiError ? retryMutation.error.message : retryMutation.isError ? t(locale, "common.error.generic") : null;
 
   return (
     <div className="mx-auto max-w-[90rem] px-5 py-10 sm:px-8">
@@ -591,9 +607,10 @@ export function ReportDetailView({ reportId, locale }: { reportId: string; local
         <Card className="mt-6 flex flex-col items-start gap-3 p-8">
           <h2 className="font-display text-lg font-bold text-heading">{t(locale, "optimizer.detail.failed.title")}</h2>
           <p className="text-sm text-danger">{report.errorMessage ?? t(locale, "common.error.generic")}</p>
-          <Button onClick={() => (window.location.href = "/optimizer/new")}>
+          <Button onClick={() => retryMutation.mutate()} loading={retryMutation.isPending}>
             {t(locale, "optimizer.detail.failed.tryAgain")}
           </Button>
+          {retryErrorMessage && <p className="text-xs text-danger">{retryErrorMessage}</p>}
         </Card>
       )}
 

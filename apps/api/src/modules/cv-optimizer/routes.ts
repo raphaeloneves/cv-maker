@@ -63,6 +63,14 @@ export async function registerCvOptimizerRoutes(app: FastifyInstance) {
     return report;
   });
 
+  // No body — retries generation with the exact inputs already stored on
+  // the report (see service.ts's retryReport). Only valid while status is
+  // "failed"; poll GET .../reports/:id same as the original generation.
+  app.post("/cv-optimizer/reports/:id/retry", { preHandler: requireAuth }, async (req) => {
+    const { id } = req.params as { id: string };
+    return service.retryReport(id, req.user!.id, req.user!.role);
+  });
+
   // No body — everything the rewrite needs (role, job description, the
   // report's own findings, which CV to base it on) already lives on the
   // report itself. Returns the report (its rewriteStatus now "pending");

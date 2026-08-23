@@ -112,6 +112,47 @@ export async function createReportFromUpload(
   return repo.reportToDomain(row);
 }
 
+/** Retries generation for a report stuck in "failed" — reuses the exact
+ * roleTitle/jobDescription/cv source already persisted on the row (see
+ * schema.prisma's own comment on why those are kept), so the user isn't
+ * asked to re-paste anything. Only valid from "failed": a pending/
+ * processing report already has, or once had, a generation in flight — see
+ * `runGeneration`'s own comment on the dev-server-restart edge case that
+ * can leave one stuck there with nothing left running to retry — and a
+ * completed one doesn't need retrying at all. */
+export async function retryReport(reportId: string, userId: string, role: UserRole) {
+  await requireEntitled(userId, role);
+
+  const row = await repo.findReportById(reportId);
+  if (!row || row.userId !== userId) throw notFound("Report not found");
+  const report = repo.reportToDomain(row);
+
+  if (report.status !== "failed") {
+    throw conflict("Only a failed report can be retried.");
+  }
+  // The source CV is SetNull on delete (see schema.prisma) specifically so
+  // a report outlives the CV it was run against — but that also means a
+  // report that's outlived its CV has nothing left to regenerate from.
+  if (!report.cvId && !row.uploadedCvText) {
+    throw badRequest("This report's original CV is no longer available to retry against.");
+  }
+
+  const locale = await getAccountLocale(userId);
+  const updatedRow = await repo.retryReport(reportId);
+
+  void runGeneration(
+    reportId,
+    userId,
+    role,
+    locale,
+    report.roleTitle,
+    row.jobDescription,
+    report.cvId ? { type: "existing", cvId: report.cvId } : { type: "upload", text: row.uploadedCvText as string },
+  );
+
+  return repo.reportToDomain(updatedRow);
+}
+
 /** "Generate an improved CV" — kicks off a second, on-demand Claude call
  * scoped to an already-completed report, then builds a brand new real `Cv`
  * from its result (see rewrite-cv.ts). Re-checks entitlement, ownership,

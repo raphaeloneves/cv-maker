@@ -68,6 +68,11 @@ const REPORT_JSON_SCHEMA = {
     },
     objections: {
       type: "array",
+      // No `minItems`/`maxItems` — the Anthropic API rejects any array
+      // length constraint other than 0 or 1 (400: "minItems values other
+      // than 0 or 1 are not supported"), so "exactly six" can only live in
+      // the description below. `cvOptimizerReportContentSchema.objections`
+      // enforces the real length server-side after the fact.
       description:
         "Exactly six items, one per key, in this exact order: wasting_time, raise_or_lower_standard, understand_business, story_coherent, signal_or_noise, right_scale.",
       items: {
@@ -80,7 +85,12 @@ const REPORT_JSON_SCHEMA = {
           summary: { type: "string", description: "One plain sentence — the scorecard row." },
           analysis: { type: "string", description: "Two to four sentences, specific to this job." },
           examples: { type: "array", items: { type: "string" }, description: "Actual quoted lines from the CV, verbatim." },
-          actionItems: { type: "array", items: { type: "string" }, description: "Concrete changes that would fix this objection." },
+          actionItems: {
+            type: "array",
+            items: { type: "string" },
+            description:
+              "0-2 items, narrow and specific to THIS objection only. Empty for a clean pass. See 'HOW FIXES ARE DIVIDED ACROSS THE REPORT' below — priorityActions is the deduplicated, ranked list; don't repeat one of its entries here.",
+          },
         },
       },
     },
@@ -90,6 +100,9 @@ const REPORT_JSON_SCHEMA = {
     // not as a first impression that analysis then has to justify.
     panelScores: {
       type: "array",
+      // See the `objections` comment above — same array-length API
+      // restriction, same server-side enforcement instead
+      // (`cvOptimizerPanelScoreSchema` array is `.length(3)`).
       description:
         `Exactly three items, one per panelist, in this exact order: ${PANEL_ROLES.join(", ")}. There is no verdict field: the actual pass/reject line is computed afterward from these three numbers, not decided by you directly.`,
       items: {
@@ -118,6 +131,8 @@ const REPORT_JSON_SCHEMA = {
     },
     criticalGaps: {
       type: "array",
+      // See the `objections` comment above — same array-length API
+      // restriction; `cvOptimizerReportContentSchema` enforces 3-5 server-side.
       description: "3-5 issues that would cause immediate rejection or real concern.",
       items: {
         type: "object",
@@ -138,7 +153,8 @@ const REPORT_JSON_SCHEMA = {
     },
     priorityActions: {
       type: "array",
-      description: "The changes to make, ranked highest-impact first.",
+      description:
+        "3-6 items, ranked highest-impact first — the one deduplicated to-do list a candidate should actually work through. Not a rollup of every objection's own actionItems: if two objections point at the same underlying problem, that's one entry here, not two. See 'HOW FIXES ARE DIVIDED ACROSS THE REPORT' below.",
       items: {
         type: "object",
         additionalProperties: false,
@@ -154,7 +170,7 @@ const REPORT_JSON_SCHEMA = {
     nextSteps: {
       type: "string",
       description:
-        "If pass: what would take this CV from good enough to exceptional for this role. If reject: the 1-3 fundamental fixes needed before it's competitive, and what to do next.",
+        "Prose, not a new list — points back at whichever priorityActions items matter most, never introduces a fix that isn't already there. If pass: what would take this CV from good enough to exceptional. If reject: which one or two priorityActions items are the fundamental blockers to fix first.",
     },
   },
 } as const;
@@ -182,7 +198,14 @@ Every recruiter reading a CV is quietly trying to kill six doubts. A CV that sur
 5. signal_or_noise: do they think and write clearly, or is this vague and padded?
 6. right_scale: have they actually worked at the size and complexity this role demands?
 
-Score each one specifically against this job, not in the abstract. For each objection: decide pass, partial, or reject; write one plain sentence for the scorecard; then a fuller two to four sentence analysis; then quote the actual CV lines that back your call; then list the concrete changes that would fix it.
+Score each one specifically against this job, not in the abstract. For each objection: decide pass, partial, or reject; write one plain sentence for the scorecard; then a fuller two to four sentence analysis; then quote the actual CV lines that back your call; then, at most two, the concrete changes that would fix THIS objection specifically — leave that list empty for a clean pass.
+
+HOW FIXES ARE DIVIDED ACROSS THE REPORT
+Three fields carry fixes, and each has exactly one job. Getting this right is what makes a report feel thorough instead of repetitive:
+- Each objection's own action items (above): narrow, tactical, specific to that one objection, at most two, empty for a clean pass. This is local detail, not the plan.
+- priorityActions (schema field, later): the single ranked, deduplicated to-do list, three to six items, highest-impact first. This is THE plan — the one thing a candidate should actually work through. If two or three objections are all really symptoms of the same underlying problem (say, wasting_time, signal_or_noise, and right_scale are all hurt by one vague, metric-free summary), that is one priorityActions entry naming the real fix, not three separate ones repeating each other in different words. Before you finalize this list, reread every objection's own action items and drop or merge anything you'd just be repeating.
+- nextSteps (schema field, at the end): prose, not a new list. Point back at whichever priorityActions items matter most; don't introduce a fix here that isn't already on that list.
+More distinct, real problems are worth surfacing than fewer — six objections each flagging something genuinely different is not "too many fixes." The failure mode to avoid is the same fix showing up three times in three different sections, which reads as padding, not thoroughness.
 
 THE RAT FRAMEWORK
 A good CV bullet has three parts, even though only two are ever written:

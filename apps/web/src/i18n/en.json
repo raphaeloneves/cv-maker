@@ -481,7 +481,7 @@
   "optimizer.detail.generating.message5": "Checking whether the scale of the work matches this role",
   "optimizer.detail.generating.message6": "Settling on a verdict",
   "optimizer.detail.failed.title": "This report couldn't be generated",
-  "optimizer.detail.failed.tryAgain": "Start a new report",
+  "optimizer.detail.failed.tryAgain": "Try again",
   "optimizer.detail.nav.objections": "Six objections",
   "optimizer.detail.nav.framework": "Framework check",
   "optimizer.detail.nav.gaps": "Gaps & strengths",

@@ -30,7 +30,11 @@ export async function fetchJobDescriptionText(url: string): Promise<string> {
     });
   }
 
-  const html = await response.text();
+  // Same defensive strip as pdf-text.ts: a NUL byte anywhere in this text
+  // (some pages carry one from a broken encoding declaration) makes
+  // Postgres reject the whole insert with "invalid byte sequence" — cheap
+  // to strip here, before any of the rest of this runs.
+  const html = (await response.text()).replace(/\u0000/g, "");
   let stripped = html;
   for (const tag of STRIP_BLOCK_TAGS) {
     stripped = stripped.replace(new RegExp(`<${tag}[^>]*>[\\s\\S]*?</${tag}>`, "gi"), " ");

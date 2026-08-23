@@ -98,6 +98,18 @@ export function failReport(id: string, errorMessage: string) {
   });
 }
 
+/** Puts a failed report back to "pending" and clears its errorMessage —
+ * the same resting state `createReport` leaves a brand new row in, so
+ * `runGeneration` (re-invoked right after this in service.ts's
+ * `retryReport`) can't tell the difference between a first attempt and a
+ * retry. */
+export function retryReport(id: string) {
+  return db.cvOptimizerReport.update({
+    where: { id },
+    data: { status: "PENDING", errorMessage: null },
+  });
+}
+
 export function setRewriteStatus(id: string, status: CvOptimizerReportStatus) {
   return db.cvOptimizerReport.update({
     where: { id },

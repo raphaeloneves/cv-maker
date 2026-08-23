@@ -38,6 +38,13 @@ export function createReportFromUpload(
   return apiPostMultipart<CvOptimizerReport>("/cv-optimizer/reports/upload", form);
 }
 
+/** Retries generation for a report that failed — same inputs already
+ * stored on the report, so no body to send. Poll `getReport` same as
+ * creation. */
+export function retryReport(reportId: string): Promise<CvOptimizerReport> {
+  return apiPost<CvOptimizerReport>(`/cv-optimizer/reports/${reportId}/retry`);
+}
+
 /** "Generate an improved CV" — no body, everything it needs already lives on
  * the report. Returns the report with `rewriteStatus: "pending"`; poll
  * `getReport` same as report generation itself. */

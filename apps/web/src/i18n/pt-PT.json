@@ -483,7 +483,7 @@
   "optimizer.detail.generating.message5": "A verificar se a escala do trabalho corresponde a esta vaga",
   "optimizer.detail.generating.message6": "A definir um veredito",
   "optimizer.detail.failed.title": "Não foi possível gerar este relatório",
-  "optimizer.detail.failed.tryAgain": "Iniciar um novo relatório",
+  "optimizer.detail.failed.tryAgain": "Tentar novamente",
   "optimizer.detail.nav.objections": "Seis objeções",
   "optimizer.detail.nav.framework": "Verificação do CV",
   "optimizer.detail.nav.gaps": "Falhas e pontos fortes",
