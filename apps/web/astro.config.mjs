@@ -26,4 +26,17 @@ export default defineConfig({
       filter: (page) => !GATED_PATH_PREFIXES.some((prefix) => new URL(page).pathname.startsWith(prefix)),
     }),
   ],
+  // `@dnd-kit/*` (drag-to-reorder in the CV content step) is only reachable
+  // from /builder/content's own module graph, not from any earlier step's —
+  // so `astro dev`'s on-demand dep pre-bundler doesn't discover it until the
+  // first time someone actually lands on that page. That first navigation
+  // then races the re-optimize (dnd-kit's chunks 503 while esbuild re-runs),
+  // and if a full-reload signal gets missed the page is left hydrating an
+  // island whose import() rejected forever — the "stuck on loading" bug.
+  // Listing it here makes it part of the startup pre-bundle instead.
+  vite: {
+    optimizeDeps: {
+      include: ["@dnd-kit/core", "@dnd-kit/sortable", "@dnd-kit/utilities"],
+    },
+  },
 });
