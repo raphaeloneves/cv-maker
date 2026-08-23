@@ -246,7 +246,7 @@ async function runRewriteGeneration(
       newTitle: `${params.cvTitle} (Optimized)`,
       rewrite,
     });
-    await repo.completeRewrite(reportId, newCvId);
+    await repo.completeRewrite(reportId, newCvId, rewrite.unresolvedActions);
   } catch (err) {
     console.error(`[cv-optimizer] rewrite for report ${reportId} failed:`, err);
     await repo.failRewrite(reportId, "Something went wrong generating the improved CV. Please try again.");
@@ -280,7 +280,7 @@ async function runRewriteGenerationFromUpload(
       contentLanguage: params.locale,
       extraction,
     });
-    await repo.completeRewrite(reportId, newCvId);
+    await repo.completeRewrite(reportId, newCvId, extraction.unresolvedActions);
   } catch (err) {
     console.error(`[cv-optimizer] rewrite-from-upload for report ${reportId} failed:`, err);
     await repo.failRewrite(reportId, "Something went wrong generating the improved CV. Please try again.");

@@ -22,6 +22,7 @@ export function reportToDomain(row: Row): CvOptimizerReport {
     rewriteStatus: row.rewriteStatus ? enumToDomain<CvOptimizerReportStatus>(row.rewriteStatus) : null,
     rewriteCvId: row.rewriteCvId,
     rewriteErrorMessage: row.rewriteErrorMessage,
+    rewriteUnresolvedActions: (row.rewriteUnresolvedActions as string[] | null) ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -117,10 +118,15 @@ export function setRewriteStatus(id: string, status: CvOptimizerReportStatus) {
   });
 }
 
-export function completeRewrite(id: string, rewriteCvId: string) {
+export function completeRewrite(id: string, rewriteCvId: string, unresolvedActions: string[]) {
   return db.cvOptimizerReport.update({
     where: { id },
-    data: { rewriteStatus: "COMPLETED", rewriteCvId, rewriteErrorMessage: null },
+    data: {
+      rewriteStatus: "COMPLETED",
+      rewriteCvId,
+      rewriteErrorMessage: null,
+      rewriteUnresolvedActions: unresolvedActions,
+    },
   });
 }
 

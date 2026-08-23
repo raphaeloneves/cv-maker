@@ -511,6 +511,7 @@
   "optimizer.detail.rewrite.completed.title": "O seu CV melhorado está pronto",
   "optimizer.detail.rewrite.completed.body": "Foi criado um novo CV com o resumo e os pontos de experiência reescritos para resolver as lacunas acima. O resto foi mantido sem alterações.",
   "optimizer.detail.rewrite.completed.viewCv": "Abrir o novo CV",
+  "optimizer.detail.rewrite.completed.unresolvedTitle": "Não foi possível corrigir automaticamente — estas lacunas precisam de um facto que só você pode fornecer:",
   "optimizer.detail.rewrite.failed.tryAgain": "Tentar novamente",
 
   "optimizer.detail.objections.heading": "As seis objeções",

@@ -417,18 +417,33 @@ function RewriteCta({ report, locale }: { report: CvOptimizerReport; locale: Bui
   }
 
   if (report.rewriteStatus === "completed" && report.rewriteCvId) {
+    const unresolved = report.rewriteUnresolvedActions ?? [];
     return (
-      <Card className="flex flex-wrap items-center gap-4 bg-success/5 p-5">
-        <div className="flex-1">
-          <p className="text-sm font-semibold text-heading">{t(locale, "optimizer.detail.rewrite.completed.title")}</p>
-          <p className="mt-0.5 text-xs text-text-muted">{t(locale, "optimizer.detail.rewrite.completed.body")}</p>
+      <Card className="flex flex-col gap-4 bg-success/5 p-5">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-heading">{t(locale, "optimizer.detail.rewrite.completed.title")}</p>
+            <p className="mt-0.5 text-xs text-text-muted">{t(locale, "optimizer.detail.rewrite.completed.body")}</p>
+          </div>
+          <Button className="shrink-0" href={withCvId("/builder/personal-info", report.rewriteCvId)}>
+            {t(locale, "optimizer.detail.rewrite.completed.viewCv")}
+          </Button>
         </div>
-        <Button
-          className="shrink-0"
-          onClick={() => (window.location.href = withCvId("/builder/personal-info", report.rewriteCvId))}
-        >
-          {t(locale, "optimizer.detail.rewrite.completed.viewCv")}
-        </Button>
+        {unresolved.length > 0 && (
+          <div className="border-t border-[var(--border-on-light)] pt-3">
+            <p className="text-xs font-semibold text-heading">
+              {t(locale, "optimizer.detail.rewrite.completed.unresolvedTitle")}
+            </p>
+            <ul className="mt-1.5 flex flex-col gap-1 text-xs text-text-muted">
+              {unresolved.map((item, index) => (
+                <li key={index} className="flex gap-1.5">
+                  <span aria-hidden="true">·</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </Card>
     );
   }

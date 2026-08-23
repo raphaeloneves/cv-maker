@@ -185,6 +185,13 @@ export const cvOptimizerReportSchema = z.object({
   rewriteStatus: cvOptimizerReportStatusSchema.nullable(),
   rewriteCvId: z.string().uuid().nullable(),
   rewriteErrorMessage: z.string().nullable(),
+  // Report items the rewrite honestly couldn't act on because the source CV
+  // (or uploaded text) had no fact to back them — e.g. "explain why scope
+  // dropped from 90+ to 12 people" when the CV never says why. Populated
+  // alongside rewriteCvId on a completed rewrite; null until then. See
+  // rewrite-llm.ts's "never invent a fact" rule and its unresolvedActions
+  // field for why this exists instead of the rewrite silently dropping them.
+  rewriteUnresolvedActions: z.array(z.string()).nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -224,6 +231,14 @@ export const cvOptimizerRewriteContentSchema = z.object({
   profileSummary: z.string(),
   // One per original work experience entry, same order.
   workExperience: z.array(cvOptimizerRewriteWorkExperienceSchema),
+  // priorityActions/criticalGaps items the rewrite deliberately left alone
+  // because acting on them honestly would require a fact the source CV
+  // never states (e.g. a reason for a scope change, a headcount personally
+  // closed) — never a stylistic skip. Empty array when everything gets
+  // covered. Surfaced to the user (see cvOptimizerReportSchema's
+  // rewriteUnresolvedActions) as a "you need to add this yourself" list
+  // instead of a silent gap.
+  unresolvedActions: z.array(z.string()),
 });
 export type CvOptimizerRewriteContent = z.infer<typeof cvOptimizerRewriteContentSchema>;
 
@@ -292,6 +307,9 @@ export const cvOptimizerExtractedCvSchema = z.object({
   workExperience: z.array(cvOptimizerExtractedWorkExperienceSchema),
   education: z.array(cvOptimizerExtractedEducationSchema),
   skills: z.array(cvOptimizerExtractedSkillSchema),
+  // See cvOptimizerRewriteContentSchema's unresolvedActions — same idea,
+  // for the upload path's one-shot extract-and-rewrite call.
+  unresolvedActions: z.array(z.string()),
 });
 export type CvOptimizerExtractedCv = z.infer<typeof cvOptimizerExtractedCvSchema>;
 

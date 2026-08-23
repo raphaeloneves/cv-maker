@@ -509,6 +509,7 @@
   "optimizer.detail.rewrite.completed.title": "Your improved CV is ready",
   "optimizer.detail.rewrite.completed.body": "A new CV was created with the summary and experience bullets rewritten to address the gaps above. Everything else was carried over unchanged.",
   "optimizer.detail.rewrite.completed.viewCv": "Open the new CV",
+  "optimizer.detail.rewrite.completed.unresolvedTitle": "Couldn't be fixed automatically — these need a fact only you can supply:",
   "optimizer.detail.rewrite.failed.tryAgain": "Try again",
 
   "optimizer.detail.objections.heading": "The six objections",

@@ -55,7 +55,7 @@ async function runStructuredCall<T>(params: {
 const REWRITE_JSON_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["profileSummary", "workExperience"],
+  required: ["profileSummary", "workExperience", "unresolvedActions"],
   properties: {
     profileSummary: { type: "string", description: "The rewritten profile summary, 2-4 sentences." },
     workExperience: {
@@ -70,6 +70,12 @@ const REWRITE_JSON_SCHEMA = {
           description: { type: "string", description: "Rewritten bullets, same HTML list format as the original." },
         },
       },
+    },
+    unresolvedActions: {
+      type: "array",
+      items: { type: "string" },
+      description:
+        "priorityActions/criticalGaps items you couldn't honestly act on because the source CV has no supporting fact, one short sentence each explaining why. Empty array if everything actionable got addressed. Never list something you already fixed, and never list something you simply skipped for a reason other than a genuine missing fact.",
     },
   },
 } as const;
@@ -106,7 +112,20 @@ THE ONE RULE THAT MATTERS MOST
 Never invent a fact. Every number, outcome, tool, team size, or responsibility you write must already exist somewhere in the original CV, or be a direct, defensible restatement of something that does. If the CV doesn't say how many people someone managed, you don't get to say five. If a number isn't there, don't add one — sharpen the sentence around what's actually true instead. Fabricating experience is worse than a weak bullet; it would make this CV dishonest in exactly the way the evaluation report was written to catch in someone else's CV.
 
 HOW YOU FIX WHAT THE REPORT FOUND
-Apply the RAT framework: keep Responsibility and Accomplishment distinct, lead with ownership verbs (led, built, delivered, established), cut passive phrasing like "responsible for" or "helped with". Address the specific critical gaps and priority actions from the evaluation report directly: if it said the summary buries seniority, fix that; if it said a bullet undersells scope, rewrite it to state exactly what already happened, more clearly and with the right emphasis for this specific job. Keep each entry's bullets reasonable in number (2-5), tightened, never padded with filler.
+Address every single item in priorityActions, not only the high-impact ones. A medium or low-impact item (a vague phrase to sharpen, a number to spell out) is usually a one-clause fix with zero fabrication risk — there is no excuse for leaving it exactly as it was just because a "high" item elsewhere felt like the real work. Before you finish, go back through priorityActions and criticalGaps one by one and check that your draft actually reflects each one; an item you can act on honestly but didn't is a mistake, not a stylistic choice. (An item you genuinely can't act on because the source has no supporting fact belongs in unresolvedActions below, not silently ignored either way.)
+
+Also address the specific critical gaps directly: if it said the summary buries seniority, fix that; if it said a bullet undersells scope, rewrite it to state exactly what already happened, more clearly and with the right emphasis for this specific job. Keep each entry's bullets reasonable in number (2-5), tightened, never padded with filler.
+
+KEEP RESPONSIBILITY AND ACCOMPLISHMENT AS SEPARATE SENTENCES, NOT ONE FUSED CLAUSE
+The RAT framework fails silently when a bullet chains scope and outcome together with "and," "which," "enabling," "unlocking," or "permitting" into one long sentence — that reads as dense, not distinct, and a reader can no longer tell where the responsibility ends and the accomplishment begins. Never write it that way. Instead, write the responsibility as its own short sentence (what they owned or were accountable for, with no outcome baked in yet), then a separate sentence for the accomplishment (what they actually delivered, with the number or outcome). Two sentences, one bullet.
+
+Bad, fused (do not write like this):
+"Led the platform team's technical strategy for M&A integration and defined the multi-year roadmap in partnership with Product, Security, and executive leadership, unlocking expansion into the enterprise and government market."
+
+Good, split (write like this instead):
+"Owned the platform team's technical strategy for M&A integration, building the multi-year roadmap with Product, Security, and executive leadership. That roadmap unlocked expansion into the enterprise and government market."
+
+Same facts, same length, same claim — the only change is that responsibility and accomplishment now each get their own sentence instead of being chained into one. Apply this split to every bullet you rewrite, including ones the report didn't flag by name, since a fused sentence is exactly what the signal_or_noise and wasting_time objections are checking for even when the report's wording talks about something else.
 
 NEVER HEDGE, UNDERSELL, OR WRITE "GROWING INTO" LANGUAGE
 Write from where the candidate already stands, not where they're heading. Never add a forward-looking qualifier like "building toward," "working towards becoming," "developing into," or "on the path to" the level this job asks for. That phrasing reads as honest humility while you're writing it, but it hands the evaluator a direct quote of the candidate admitting they aren't there yet — a bigger objection than the vague bullet you were fixing, and one you just manufactured. Claiming credit for work someone actually did is accurate, not arrogant; this is not the place for humility. If the CV genuinely doesn't support the seniority this job wants, the fix is never a hedge — it's finding the strongest true framing already available in the source (the real scope, the real decision, the real outcome) and stating it as settled fact, not as an aspiration.
@@ -122,6 +141,9 @@ The evaluation report judges the CV against this one job, and that's correct for
 
 WHAT LANGUAGE YOU WRITE IN
 Write the profile summary and every bullet in output_language, the language given to you in the input — this is the candidate's own account language preference, not necessarily the language the CV happens to be written in. If the original CV is in a different language, translate the prose faithfully into output_language, but never translate, reword, or alter a proper noun, employer name, tool name, date, or number: those stay exactly as given, verbatim, even inside a translated sentence. Translating faithfully is not the same as inventing — the one rule above still applies in full.
+
+WHAT GOES IN unresolvedActions
+After you've gone through priorityActions and criticalGaps and applied everything the source CV genuinely supports, list in unresolvedActions the ones you couldn't honestly act on and why in one short sentence each, e.g. "Couldn't explain the Zendesk-to-Snyk scope drop — the CV never states a reason, and inventing one would violate the no-fabrication rule." Only put something here if the real blocker is "the source has no supporting fact" — never list an item here that you simply didn't get to, and never list something you actually did address. This is not a place to restate a fix you made; it is only for the honest gaps a rewrite can't close, so the candidate knows exactly what to add themselves. Return an empty array if you managed to address everything.
 
 Return one workExperience item per entry in cv_json's work experience section, using that entry's own id as entryId, in the same order.
 
@@ -176,7 +198,7 @@ const EXTRACTED_DATE_FIELDS_JSON_SCHEMA = {
 const EXTRACT_JSON_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["personalInfo", "profileSummary", "workExperience", "education", "skills"],
+  required: ["personalInfo", "profileSummary", "workExperience", "education", "skills", "unresolvedActions"],
   properties: {
     personalInfo: {
       type: "object",
@@ -243,6 +265,12 @@ const EXTRACT_JSON_SCHEMA = {
         },
       },
     },
+    unresolvedActions: {
+      type: "array",
+      items: { type: "string" },
+      description:
+        "priorityActions/criticalGaps items you couldn't honestly act on because the source text has no supporting fact, one short sentence each explaining why. Empty array if everything actionable got addressed.",
+    },
   },
 } as const;
 
@@ -254,7 +282,18 @@ WHAT YOU TRANSCRIBE, EXACTLY AS WRITTEN
 Personal info (name, email, phone, city, LinkedIn), and for every work experience and education entry: the employer or school name, the title or degree, the city, and the dates. Copy these exactly as they appear in the source text. Never guess, complete, or correct a name or date you're not sure about — if something is genuinely ambiguous or missing, leave it out rather than invent a plausible-looking value.
 
 WHAT YOU REWRITE
-Only two things: the profile summary, and each work experience entry's bullet points (its description). Apply the RAT framework: keep Responsibility and Accomplishment distinct, lead with ownership verbs (led, built, delivered, established), cut passive phrasing like "responsible for" or "helped with". Address the specific critical gaps and priority actions from the evaluation report you already produced for this exact CV and role — you are fixing the problems you already found, not starting over.
+Only two things: the profile summary, and each work experience entry's bullet points (its description). Apply the RAT framework: lead with ownership verbs (led, built, delivered, established), cut passive phrasing like "responsible for" or "helped with". Address every item in priorityActions and criticalGaps from the evaluation report you already produced for this exact CV and role, not only the high-impact ones — a medium or low-impact item is usually a one-clause fix with no fabrication risk, so there's no reason to leave it as it was. Before you finish, check your draft against that list item by item; anything you genuinely can't act on for lack of a supporting fact goes in unresolvedActions below instead of being silently skipped.
+
+KEEP RESPONSIBILITY AND ACCOMPLISHMENT AS SEPARATE SENTENCES, NOT ONE FUSED CLAUSE
+A bullet that chains scope and outcome together with "and," "which," "enabling," "unlocking," or "permitting" into one long sentence reads as dense, not distinct, and a reader can't tell where responsibility ends and accomplishment begins. Write the responsibility as its own short sentence (what they owned or were accountable for, no outcome baked in yet), then a separate sentence for the accomplishment (what they delivered, with the number or outcome). Two sentences, one bullet.
+
+Bad, fused (do not write like this):
+"Led the platform team's technical strategy for M&A integration and defined the multi-year roadmap in partnership with Product, Security, and executive leadership, unlocking expansion into the enterprise and government market."
+
+Good, split (write like this instead):
+"Owned the platform team's technical strategy for M&A integration, building the multi-year roadmap with Product, Security, and executive leadership. That roadmap unlocked expansion into the enterprise and government market."
+
+Same facts, same length, same claim — only the sentence structure changes. Apply this split to every bullet you write.
 
 NEVER HEDGE, UNDERSELL, OR WRITE "GROWING INTO" LANGUAGE
 Write from where the candidate already stands, not where they're heading. Never add a forward-looking qualifier like "building toward," "working towards becoming," "developing into," or "on the path to" the level this job asks for. That phrasing reads as honest humility while you're writing it, but it hands the evaluator a direct quote of the candidate admitting they aren't there yet — a bigger objection than the vague bullet you were fixing, and one you just manufactured. Claiming credit for work someone actually did is accurate, not arrogant; this is not the place for humility. If the source text genuinely doesn't support the seniority this job wants, the fix is never a hedge — it's finding the strongest true framing already available in the source (the real scope, the real decision, the real outcome) and stating it as settled fact, not as an aspiration.
@@ -276,6 +315,9 @@ List the skills the CV actually mentions, with your best-effort estimate of prof
 
 WHAT LANGUAGE YOU WRITE IN
 Write the profile summary and every bullet in output_language, the language given to you in the input — this is the candidate's own account language preference, not necessarily the language the source CV text happens to be in. If the source is in a different language, translate that prose faithfully into output_language, but never translate, reword, or alter a proper noun, employer name, tool name, date, or number: those stay exactly as given, verbatim, even inside a translated sentence. This also means personalInfo (name, email, phone, city, LinkedIn) is transcribed as-is, in its original form, never translated — a person's name isn't prose. Translating faithfully is not the same as inventing — the one rule above still applies in full.
+
+WHAT GOES IN unresolvedActions
+After applying everything the source text genuinely supports, list in unresolvedActions the priorityActions/criticalGaps items you couldn't honestly act on and why in one short sentence each — the real blocker has to be "the source has no supporting fact," never "I didn't get to it." Never list something you already fixed. Return an empty array if you addressed everything.
 
 Return your answer only as the structured JSON object described by the response schema — no other commentary.`;
 

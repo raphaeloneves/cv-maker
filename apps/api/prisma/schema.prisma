@@ -484,6 +484,11 @@ model CvOptimizerReport {
   rewriteCvId         String?
   rewriteCv           Cv?                      @relation("CvOptimizerReportRewriteCv", fields: [rewriteCvId], references: [id], onDelete: SetNull)
   rewriteErrorMessage String?
+  // Report items the rewrite couldn't honestly act on for lack of a
+  // supporting fact in the source CV — a JSON string array, set alongside
+  // rewriteCvId on completion. See cvOptimizerRewriteContentSchema's
+  // unresolvedActions in contracts.
+  rewriteUnresolvedActions Json?
 
   @@index([userId])
   @@map("cv_optimizer_reports")
