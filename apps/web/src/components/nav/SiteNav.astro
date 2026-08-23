@@ -1,10 +1,22 @@
 ---
 /**
- * Site-wide header nav — marketing pages (dark surface) and light "builder"
- * surfaces alike. Mostly static Astro markup (no React island needed for a
- * nav bar); the only interactivity, the mobile menu disclosure and the
- * builderUiLocale toggle, is handled by a small vanilla script element at
- * the bottom rather than pulling in a React island for a nav bar.
+ * Site-wide header nav — every marketing/funnel page (Home, Pricing, login,
+ * signup, legal). Always the brand's navy chrome, deliberately not toggled
+ * per-page: the nav previously forked light/dark on the page's `surface`,
+ * but `bg-navy-deep/95` and `bg-surface-page/90` are Tailwind opacity
+ * modifiers applied to theme colors that are just raw `var(--x)` references
+ * (see tailwind.config.mjs) — Tailwind can't slot an alpha value into that,
+ * so both silently resolved to a fully transparent background-color, with
+ * only backdrop-blur left doing anything. Scrolled over a light section,
+ * that read as a washed-out, low-contrast nav. Fixed by always painting the
+ * nav from `--nav-bg`, a pre-mixed rgba() token (see tokens.css) that
+ * doesn't go through that broken pipeline, so the "transparency" is real
+ * and constant instead of accidentally zero.
+ *
+ * Mostly static Astro markup (no React island needed for a nav bar); the
+ * only interactivity, the mobile menu disclosure and the builderUiLocale
+ * toggle, is handled by a small vanilla script element at the bottom rather
+ * than pulling in a React island for a nav bar.
  *
  * Locale: rendered at build time in DEFAULT_LOCALE ("en"); the strings
  * tagged data-i18n are swapped client-side by LocaleHydration.astro
@@ -20,28 +32,20 @@
 import { t } from "@/i18n";
 import { DEFAULT_LOCALE } from "@/lib/locale";
 
-interface Props {
-  surface?: "light" | "dark";
-}
-const { surface = "dark" } = Astro.props;
 const locale = DEFAULT_LOCALE;
-const isDark = surface === "dark";
 
 const localeActiveClasses = "bg-white text-navy-deep shadow-sm";
-const localeInactiveClasses = isDark ? "text-ice/70 hover:text-white" : "text-text-muted hover:text-heading";
+// text-ice/70 has the same broken-opacity-modifier problem as the header
+// background (see file comment) — plain text-ice reads close enough to it
+// (ice is already an off-white, subdued next to the solid-white active
+// pill) without relying on a modifier that silently drops to transparent.
+const localeInactiveClasses = "text-ice hover:text-white";
 ---
 
-<header
-  class:list={[
-    "sticky top-0 z-40 border-b backdrop-blur",
-    isDark
-      ? "border-[var(--border-on-dark)] bg-navy-deep/95 text-white"
-      : "border-[var(--border-on-light)] bg-surface-page/90 text-heading",
-  ]}
->
+<header class="sticky top-0 z-40 border-b border-[var(--border-on-dark)] bg-[var(--nav-bg)] text-white backdrop-blur">
   <div class="mx-auto flex max-w-7xl items-center justify-between px-5 py-3 sm:px-8">
     <a href="/" class="flex items-baseline gap-1.5 font-display font-extrabold tracking-tight">
-      <span class={isDark ? "text-white" : "text-heading"}>CV</span>
+      <span class="text-white">CV</span>
       <span class="text-orange">Maker</span>
     </a>
 
@@ -81,10 +85,7 @@ const localeInactiveClasses = isDark ? "text-ice/70 hover:text-white" : "text-te
         aria-label="Switch language"
         data-active-classes={localeActiveClasses}
         data-inactive-classes={localeInactiveClasses}
-        class:list={[
-          "inline-flex rounded-md border p-0.5",
-          isDark ? "border-[var(--border-on-dark)] bg-navy-mid/50" : "border-[var(--border-on-light)] bg-surface-sunken/60",
-        ]}
+        class="inline-flex rounded-md border border-[var(--border-on-dark)] bg-[var(--nav-pill-bg)] p-0.5"
       >
         <button
           type="button"
@@ -106,11 +107,7 @@ const localeInactiveClasses = isDark ? "text-ice/70 hover:text-white" : "text-te
         </button>
       </div>
       <span id="nav-guest" class="flex items-center gap-2 sm:gap-3">
-        <a
-          href="/login"
-          data-i18n="nav.login"
-          class={`hidden text-sm font-medium sm:inline ${isDark ? "text-ice/90 hover:text-white" : "text-body hover:text-heading"}`}
-        >
+        <a href="/login" data-i18n="nav.login" class="hidden text-sm font-medium text-ice hover:text-white sm:inline">
           {t(locale, "nav.login")}
         </a>
         <a
@@ -125,7 +122,7 @@ const localeInactiveClasses = isDark ? "text-ice/70 hover:text-white" : "text-te
         <a
           href="/dashboard"
           data-i18n="nav.dashboard"
-          class={`hidden text-sm font-medium sm:inline ${isDark ? "text-ice/90 hover:text-white" : "text-body hover:text-heading"}`}
+          class="hidden text-sm font-medium text-ice hover:text-white sm:inline"
         >
           {t(locale, "nav.dashboard")}
         </a>
@@ -133,11 +130,7 @@ const localeInactiveClasses = isDark ? "text-ice/70 hover:text-white" : "text-te
           type="button"
           id="nav-logout"
           data-i18n="nav.logout"
-          class={`inline-flex items-center rounded-md border px-3.5 py-2 text-sm font-semibold transition-colors duration-fast ease-standard ${
-            isDark
-              ? "border-[var(--border-on-dark)] text-ice hover:bg-navy-mid"
-              : "border-[var(--border-on-light)] text-heading hover:bg-surface-sunken"
-          }`}
+          class="inline-flex items-center rounded-md border border-[var(--border-on-dark)] px-3.5 py-2 text-sm font-semibold text-ice transition-colors duration-fast ease-standard hover:bg-navy-mid"
         >
           {t(locale, "nav.logout")}
         </button>

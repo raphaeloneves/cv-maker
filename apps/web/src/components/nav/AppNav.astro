@@ -25,6 +25,14 @@
  * doesn't gate anything itself, it just assumes a signed-in visitor and
  * lets RequireAuth do the actual redirect-to-/login if that assumption is
  * ever wrong (e.g. a stale bookmark after the session expired).
+ *
+ * The header background is `--nav-bg-light`, a pre-mixed rgba() token, not
+ * `bg-surface-page/90` — that opacity modifier targets a theme color that's
+ * just a raw `var(--x)` reference (see tailwind.config.mjs), which Tailwind
+ * can't apply an alpha value to. It silently resolved to a fully transparent
+ * background, leaving only backdrop-blur doing anything, which washed out
+ * against whatever content scrolled underneath. See SiteNav.astro's file
+ * comment for the same bug on the marketing nav.
  */
 import { t } from "@/i18n";
 import { DEFAULT_LOCALE } from "@/lib/locale";
@@ -70,7 +78,7 @@ const NAV_ITEMS = [
 ] as const;
 ---
 
-<header class="sticky top-0 z-40 border-b border-[var(--border-on-light)] bg-surface-page/90 text-heading backdrop-blur">
+<header class="sticky top-0 z-40 border-b border-[var(--border-on-light)] bg-[var(--nav-bg-light)] text-heading backdrop-blur">
   <div class="mx-auto flex max-w-[90rem] flex-wrap items-center justify-between gap-y-2 gap-x-4 px-5 py-3 sm:px-8">
     <a href="/dashboard" class="flex items-baseline gap-1.5 font-display font-extrabold tracking-tight">
       <span class="text-heading">CV</span>

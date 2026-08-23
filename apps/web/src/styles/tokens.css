@@ -19,6 +19,20 @@
   --navy-deep: #0a1628;
   --navy-mid: #1b3a6b;
   --navy-light: #243f72;
+  /* Ready-mixed alpha variant of navy-deep, for the sticky site nav. Tailwind
+   * can't apply a `/NN` opacity modifier to a theme color that's just a raw
+   * `var(--x)` reference (no <alpha-value> placeholder for it to slot into) —
+   * `bg-navy-deep/95` silently resolves to a fully transparent background,
+   * leaving only backdrop-blur with nothing behind it. Over a light section
+   * scrolled underneath, that reads as washed-out white-on-white. Defined at
+   * the top level (not inside [data-surface]) so the nav stays this same
+   * navy regardless of which surface the page underneath is in. */
+  --nav-bg: rgba(10, 22, 40, 0.88);
+  /* Same reasoning, for the nav's locale-switch pill (navy-mid at 50%). */
+  --nav-pill-bg: rgba(27, 58, 107, 0.5);
+  /* Same reasoning again, for AppNav's light "Ice" bar (ice at 92%) — see
+   * AppNav.astro. */
+  --nav-bg-light: rgba(232, 237, 245, 0.92);
   --orange: #e8640c;
   --orange-warm: #f4a261;
   --ice: #e8edf5;
