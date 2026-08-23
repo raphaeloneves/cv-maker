@@ -10,7 +10,13 @@ export const signUpSchema = z.object({
   lastName: z.string().trim().min(1).max(120),
   email: z.string().trim().email().max(254),
   password: z.string().min(10).max(200),
-  locale: builderLocaleSchema.default("pt-PT"),
+  // No `.default(...)` here on purpose: the frontend always sends this
+  // explicitly, seeded from the site's own current language (see
+  // apps/web SignupForm.tsx / getStoredLocale()) — a silent "pt-PT" fallback
+  // here would only ever mask a future caller (an admin tool, a script, a
+  // new signup variant) forgetting to pass it, landing that account on
+  // Portuguese with no error and no visible sign anything was wrong.
+  locale: builderLocaleSchema,
   /** Recorded as an audit record (accepted + timestamp + terms version), not
    * just an implicit "you continued so you agreed" pattern — see features/16's
    * flag that the reference product's implicit-consent pattern needs LGPD/legal

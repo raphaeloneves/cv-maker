@@ -189,10 +189,22 @@ const localeInactiveClasses = "text-ice hover:text-white";
     const button = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-locale-option]");
     const next = button?.dataset.localeOption;
     if (next !== "en" && next !== "pt-PT") return;
-    // Best-effort: also persist onto `user.locale` server-side when signed
-    // in, so cv-optimizer's report/rewrite language follows this same
-    // switch (see AccountPage.tsx's LocaleSwitch, which does the same).
-    if (signedIn) updateLocale(next).catch((err) => console.error("Failed to persist account locale", err));
+    // Best-effort: also persist onto `user.locale` server-side, so
+    // cv-optimizer's report/rewrite language follows this same switch (see
+    // AccountPage.tsx's LocaleSwitch, which does the same). Always attempt
+    // it rather than gating on `signedIn` — that flag only reflects whether
+    // the page's own `refreshSession()` call has resolved *yet*, not
+    // whether the visitor is actually signed in, so gating on it raced a
+    // real signed-in visitor clicking this before that promise settled:
+    // `updateLocale` silently never persisted, `user.locale` stayed stale,
+    // and every CV Optimizer report/rewrite kept generating in the old
+    // language with no visible sign anything was wrong. Calling it
+    // unconditionally is safe either way — a signed-out guest's request has
+    // no valid access token yet either, but apiPatch's own 401 handling
+    // (see api-client.ts) transparently tries a refresh before giving up,
+    // so a genuinely signed-in visitor still succeeds even mid-race, and a
+    // true guest just gets the swallowed failure below, exactly as before.
+    updateLocale(next).catch((err) => console.error("Failed to persist account locale", err));
     setStoredLocale(next);
     window.location.reload();
   });

@@ -34,7 +34,13 @@ model User {
   // Intentionally decoupled from PersonalInfo.email — see features/19.
   email        String   @unique
   passwordHash String
-  locale       BuilderLocale @default(PT_PT)
+  // No column default on purpose (see packages/contracts/src/auth.ts's
+  // signUpSchema) — `createUser()` always sets this explicitly from the
+  // signup request, itself seeded from the site's own current language; a
+  // silent DB-level fallback here would only ever mask some future write
+  // path forgetting to pass it, landing an account on Portuguese with no
+  // error and no visible sign anything was wrong.
+  locale       BuilderLocale
   // ADMIN bypasses all paywall/entitlement checks (see
   // @cv-maker/contracts billing.ts:hasActiveEntitlement) — internal
   // QA/demo accounts only, seeded via prisma/seed.ts, never self-serve.
