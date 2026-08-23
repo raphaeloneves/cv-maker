@@ -289,6 +289,7 @@
   "entry.delete": "Eliminar",
   "entry.done": "Concluído",
   "entry.deleteConfirm": "Remover esta entrada? Esta ação não pode ser desfeita.",
+  "entry.dragToReorder": "Arraste para reordenar a entrada",
 
   "richText.bold": "Negrito",
   "richText.italic": "Itálico",

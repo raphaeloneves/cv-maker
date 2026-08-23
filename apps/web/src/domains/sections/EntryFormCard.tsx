@@ -31,6 +31,7 @@ interface EntryFormCardProps<TEntry extends { id: string }, TDraft, TUpsert> {
   editLabel: string;
   deleteLabel: string;
   doneLabel: string;
+  dragToReorderLabel: string;
 }
 
 /** One generic "collapsible form / summary row" card used by every
@@ -57,6 +58,7 @@ export function EntryFormCard<TEntry extends { id: string }, TDraft, TUpsert>({
   editLabel,
   deleteLabel,
   doneLabel,
+  dragToReorderLabel,
 }: EntryFormCardProps<TEntry, TDraft, TUpsert>) {
   const [expanded, setExpanded] = useState(!!startExpanded || !entry);
   const [draft, setDraft] = useState<TDraft>(initialDraft);
@@ -125,7 +127,7 @@ export function EntryFormCard<TEntry extends { id: string }, TDraft, TUpsert>({
           <button
             type="button"
             className="mt-1.5 shrink-0 cursor-grab touch-none text-text-muted active:cursor-grabbing"
-            aria-label="Drag to reorder"
+            aria-label={dragToReorderLabel}
             {...attributes}
             {...listeners}
           >

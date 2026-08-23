@@ -287,6 +287,7 @@
   "entry.delete": "Delete",
   "entry.done": "Done",
   "entry.deleteConfirm": "Remove this entry? This can't be undone.",
+  "entry.dragToReorder": "Drag to reorder entry",
 
   "richText.bold": "Bold",
   "richText.italic": "Italic",

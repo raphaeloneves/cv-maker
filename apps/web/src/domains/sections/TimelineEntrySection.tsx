@@ -202,6 +202,7 @@ export function TimelineEntrySection({ section, kind, fields }: TimelineEntrySec
             editLabel={t(locale, "entry.edit")}
             deleteLabel={t(locale, "entry.delete")}
             doneLabel={t(locale, "entry.done")}
+            dragToReorderLabel={t(locale, "entry.dragToReorder")}
             deleteConfirmMessage={t(locale, "entry.deleteConfirm")}
             renderSummary={renderSummary}
             renderFields={renderFields}
@@ -224,6 +225,7 @@ export function TimelineEntrySection({ section, kind, fields }: TimelineEntrySec
           editLabel={t(locale, "entry.edit")}
           deleteLabel={t(locale, "entry.delete")}
           doneLabel={t(locale, "entry.done")}
+          dragToReorderLabel={t(locale, "entry.dragToReorder")}
           deleteConfirmMessage={t(locale, "entry.deleteConfirm")}
           renderSummary={() => null}
           renderFields={renderFields}

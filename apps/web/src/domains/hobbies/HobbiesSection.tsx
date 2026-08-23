@@ -65,6 +65,7 @@ export function HobbiesSection({ section }: { section: Section }) {
             editLabel={t(locale, "entry.edit")}
             deleteLabel={t(locale, "entry.delete")}
             doneLabel={t(locale, "entry.done")}
+            dragToReorderLabel={t(locale, "entry.dragToReorder")}
             deleteConfirmMessage={t(locale, "entry.deleteConfirm")}
             renderFields={renderFields}
             renderSummary={(e) => (
@@ -92,6 +93,7 @@ export function HobbiesSection({ section }: { section: Section }) {
             editLabel={t(locale, "entry.edit")}
             deleteLabel={t(locale, "entry.delete")}
             doneLabel={t(locale, "entry.done")}
+            dragToReorderLabel={t(locale, "entry.dragToReorder")}
             deleteConfirmMessage={t(locale, "entry.deleteConfirm")}
             renderFields={renderFields}
             renderSummary={() => null}
