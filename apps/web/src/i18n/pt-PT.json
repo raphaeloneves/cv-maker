@@ -72,6 +72,8 @@
   "marketing.optimizer.subtitle": "Cole uma descrição de vaga, escolha ou envie o seu CV, e receba uma avaliação real: um veredito de aprovado ou reprovado, com o raciocínio por trás, não uma percentagem que tem de adivinhar.",
   "marketing.optimizer.verdict.title": "Um veredito direto de aprovado ou reprovado",
   "marketing.optimizer.verdict.body": "Sem rodeios. Vai saber de imediato se este CV sobreviveria ao primeiro contacto com um recrutador para esta vaga em concreto, e exatamente porquê.",
+  "marketing.optimizer.panel.title": "Um veredito, três perspetivas especializadas",
+  "marketing.optimizer.panel.body": "Um recrutador, um career coach e um especialista em CVs avaliam o seu CV de forma independente para esta vaga em concreto. Se os três discordarem, isso conta contra si, por isso o veredito nunca é a opinião de uma só pessoa.",
   "marketing.optimizer.actions.title": "Correções ordenadas por impacto",
   "marketing.optimizer.actions.body": "Todo o relatório termina com ações prioritárias, ordenadas do maior para o menor impacto, para saber sempre o que corrigir primeiro.",
   "marketing.optimizer.rewrite.title": "Depois aplique as correções automaticamente",

@@ -72,6 +72,8 @@
   "marketing.optimizer.subtitle": "Paste a job description, pick or upload your CV, and get a real evaluation: a pass or reject verdict, backed by reasoning you can act on, not a percentage you're left to guess at.",
   "marketing.optimizer.verdict.title": "A blunt pass or reject verdict",
   "marketing.optimizer.verdict.body": "No hedging. You'll know immediately whether this CV would survive first contact with a recruiter for this exact role, and exactly why.",
+  "marketing.optimizer.panel.title": "One verdict, three expert lenses",
+  "marketing.optimizer.panel.body": "A recruiter, a career coach, and a resume writer each score your CV independently for this exact role. If the three disagree, that itself counts against you, so the verdict is never just one reviewer's opinion.",
   "marketing.optimizer.actions.title": "Fixes ranked by impact",
   "marketing.optimizer.actions.body": "Every report ends with priority actions, ranked from highest to lowest impact, so you always know what to fix first.",
   "marketing.optimizer.rewrite.title": "Then apply the fixes automatically",
