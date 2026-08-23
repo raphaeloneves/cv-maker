@@ -201,7 +201,15 @@ const softwareAppJsonLd = {
   jsonLd={[faqJsonLd, softwareAppJsonLd]}
 >
   <!-- ============================= HERO ============================= -->
-  <section id="hero" class="relative overflow-hidden px-5 pb-24 pt-16 sm:px-8 sm:pb-32 sm:pt-20">
+  <!-- jitter.video-style hero: no product screenshot at all, just an
+       eyebrow, one big centered two-line headline, a subtitle, the two
+       CTAs, and a small trust row — the same "AI-powered / human-driven /
+       ATS-friendly" claim the old screenshot's floating badges used to
+       make, now made directly in text instead of decorating a mockup. A
+       real screenshot competing with this much typography for attention
+       wasn't earning its space; the report itself gets shown properly
+       later, in the platform-pillars section. -->
+  <section id="hero" class="relative overflow-hidden px-5 pb-24 pt-20 text-center sm:px-8 sm:pb-36 sm:pt-28">
     <div
       class="pointer-events-none absolute inset-0 opacity-[0.07]"
       style="background-image: radial-gradient(var(--ice) 1px, transparent 1px); background-size: 22px 22px;"
@@ -222,123 +230,51 @@ const softwareAppJsonLd = {
       aria-hidden="true"
     >
     </div>
-    <div
-      data-animate="drift"
-      style="animation-delay: -14s; background: radial-gradient(circle, var(--navy-light) 0%, transparent 70%);"
-      class="pointer-events-none absolute left-1/3 top-1/4 h-[380px] w-[380px] rounded-full opacity-40 blur-3xl"
-      aria-hidden="true"
-    >
-    </div>
 
-    <div class="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 lg:grid-cols-[1.05fr_0.95fr]">
-      <div class="min-w-0">
-        <p class="eyebrow text-xs text-orange" data-i18n="marketing.eyebrow">{t(locale, "marketing.eyebrow")}</p>
-        <h1 class="mt-4 max-w-xl font-display text-4xl font-extrabold leading-[1.05] tracking-tighter text-white sm:text-5xl lg:text-[3.4rem]">
-          <span data-i18n="marketing.hero.title.prefix">{t(locale, "marketing.hero.title.prefix")}</span>{" "}
-          <span class="text-gradient-shimmer" data-i18n="marketing.hero.title.accent">
-            {t(locale, "marketing.hero.title.accent")}
-          </span>
-        </h1>
-        <p class="mt-5 max-w-md text-base leading-relaxed text-ice/75" data-i18n="marketing.hero.subtitle">
-          {t(locale, "marketing.hero.subtitle")}
-        </p>
+    <div class="relative mx-auto max-w-6xl" data-animate="fade-up">
+      <p class="eyebrow mx-auto text-xs text-orange" data-i18n="marketing.eyebrow">{t(locale, "marketing.eyebrow")}</p>
+      <h1 class="mx-auto mt-6 font-display text-4xl font-extrabold leading-[1.02] tracking-tighter text-white sm:text-6xl lg:text-7xl">
+        <span data-i18n="marketing.hero.title.prefix">{t(locale, "marketing.hero.title.prefix")}</span>
+        <br />
+        <span class="text-gradient-shimmer" data-i18n="marketing.hero.title.accent">
+          {t(locale, "marketing.hero.title.accent")}
+        </span>
+      </h1>
+      <p class="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-ice/75" data-i18n="marketing.hero.subtitle">
+        {t(locale, "marketing.hero.subtitle")}
+      </p>
 
-        <div class="mt-8 flex flex-wrap items-center gap-3">
-          <a
-            href="/signup"
-            data-i18n="marketing.hero.cta.primary"
-            class="inline-flex items-center rounded-md bg-orange px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-orange/0 transition-all duration-standard ease-standard hover:-translate-y-0.5 hover:bg-accent-hover hover:shadow-orange/30"
-          >
-            {t(locale, "marketing.hero.cta.primary")}
-          </a>
-          <a
-            href="#framework"
-            data-i18n="marketing.hero.cta.secondary"
-            class="inline-flex items-center rounded-md border border-[var(--border-on-dark)] px-6 py-3 text-sm font-semibold text-ice transition-all duration-standard ease-standard hover:-translate-y-0.5 hover:border-orange/40 hover:bg-navy-mid"
-          >
-            {t(locale, "marketing.hero.cta.secondary")}
-          </a>
-        </div>
-
+      <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
+        <a
+          href="/signup"
+          data-i18n="marketing.hero.cta.primary"
+          class="inline-flex items-center rounded-md bg-orange px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-orange/0 transition-all duration-standard ease-standard hover:-translate-y-0.5 hover:bg-accent-hover hover:shadow-orange/30"
+        >
+          {t(locale, "marketing.hero.cta.primary")}
+        </a>
+        <a
+          href="#framework"
+          data-i18n="marketing.hero.cta.secondary"
+          class="inline-flex items-center rounded-md border border-[var(--border-on-dark)] px-6 py-3 text-sm font-semibold text-ice transition-all duration-standard ease-standard hover:-translate-y-0.5 hover:border-orange/40 hover:bg-navy-mid"
+        >
+          {t(locale, "marketing.hero.cta.secondary")}
+        </a>
       </div>
 
-      <!-- Signature element: an animated frame around a screenshot of the
-           actual CV Optimizer report, with the real product's verdict stamp
-           and score gauge (see VerdictStamp.tsx / ScoreGauge.tsx) recreated
-           floating on top of it. The screenshot itself is a placeholder —
-           see the instructions in the comment below the frame. -->
-      <div class="relative mx-auto w-full min-w-0 max-w-xl" data-animate="fade-up">
-        <div data-animate="float" class="relative rounded-lg bg-white p-2.5 shadow-2xl shadow-black/40" style="transform: rotate(-1.5deg);">
-          <div class="flex items-center gap-1.5 px-2 pb-2 pt-1">
-            <span class="h-2.5 w-2.5 rounded-full bg-[#e0e4ea]"></span>
-            <span class="h-2.5 w-2.5 rounded-full bg-[#e0e4ea]"></span>
-            <span class="h-2.5 w-2.5 rounded-full bg-[#e0e4ea]"></span>
-            <span class="mono-label ml-2 text-[9px] text-[#9aa5ba]" data-i18n="marketing.hero.screenshot.badge">
-              {t(locale, "marketing.hero.screenshot.badge")}
+      <!-- Trust row — mirrors jitter.video's own social-proof line under its
+           hero CTA (a thin top border + one small centered line), except we
+           don't have a user-count claim to cite honestly, so this makes the
+           same AI/human/ATS claim the old screenshot's floating badges used
+           to carry, in three short items instead of a number. -->
+      <div class="mx-auto mt-12 flex max-w-lg flex-wrap items-center justify-center gap-x-8 gap-y-3 border-t border-[var(--border-on-dark)] pt-6">
+        {
+          (["ai", "human", "ats"] as const).map((key) => (
+            <span class="flex items-center gap-1.5 text-xs font-semibold text-ice/70">
+              <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full" style="background: rgba(232, 100, 12, 0.15)" set:html={icon("check", "var(--orange-warm)", 10)} />
+              <span data-i18n={`marketing.hero.badge.${key}`}>{t(locale, `marketing.hero.badge.${key}`)}</span>
             </span>
-          </div>
-          <!--
-            SCREENSHOT PLACEHOLDER — replace this div with:
-              <img src="/images/marketing/optimizer-report-hero.png" alt="" class="aspect-[4/3] w-full rounded-b-md object-cover object-top" />
-            Capture: open a completed CV Optimizer report (/optimizer/[id]),
-            screenshot the top of the page (verdict stamp + score gauge +
-            role title), landscape crop, ~1200x900px, save as
-            optimizer-report-hero.png in apps/web/public/images/marketing/.
-          -->
-          <div
-            class="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-b-md border border-dashed border-[var(--border-on-light)]"
-            style="background-image: repeating-linear-gradient(135deg, var(--surface-sunken) 0, var(--surface-sunken) 1px, transparent 1px, transparent 12px); background-color: var(--surface-page);"
-          >
-            <span set:html={icon("layout", "#9aa5ba", 28)} />
-            <p class="mono-label text-center text-[10px] text-[#9aa5ba]">Screenshot placeholder<br />optimizer-report-hero.png</p>
-          </div>
-        </div>
-
-        <div
-          data-animate="float"
-          style="animation-delay: -1.8s; transform: rotate(-6deg);"
-          class="absolute -bottom-6 -left-8 inline-block rounded-sm border-4 border-success p-1.5 shadow-lg"
-        >
-          <div class="flex items-center gap-2 rounded-[3px] border-2 border-success bg-navy-deep px-4 py-1.5">
-            <span set:html={icon("check", "var(--success)", 18)} />
-            <span class="font-display text-lg font-extrabold uppercase tracking-widest text-success">
-              {t(locale, "optimizer.detail.verdict.pass")}
-            </span>
-          </div>
-        </div>
-
-        <div
-          data-animate="float"
-          style="animation-delay: -3s; transform: rotate(-3deg);"
-          class="absolute -top-9 left-14 flex items-center gap-2 rounded-pill bg-navy-mid px-4 py-2.5 shadow-lg"
-        >
-          <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-warm/20" set:html={icon("check", "var(--orange-warm)", 12)} />
-          <span class="whitespace-nowrap text-xs font-semibold text-white" data-i18n="marketing.hero.badge.human">
-            {t(locale, "marketing.hero.badge.human")}
-          </span>
-        </div>
-
-        <div
-          data-animate="float"
-          style="animation-delay: -5.4s; transform: rotate(6deg);"
-          class="absolute -right-10 top-[42%] flex items-center gap-2 rounded-pill bg-navy-mid px-5 py-3 shadow-xl"
-        >
-          <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange/20" set:html={icon("check", "var(--orange)", 14)} />
-          <span class="whitespace-nowrap text-sm font-semibold text-white" data-i18n="marketing.hero.badge.ai">
-            {t(locale, "marketing.hero.badge.ai")}
-          </span>
-        </div>
-
-        <div
-          data-animate="float"
-          style="animation-delay: -1.2s; transform: rotate(2deg);"
-          class="absolute -bottom-9 right-10 flex items-center gap-2 rounded-pill bg-navy-mid px-4 py-2.5 shadow-lg"
-        >
-          <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/20" set:html={icon("check", "var(--success)", 12)} />
-          <span class="whitespace-nowrap text-xs font-semibold text-white" data-i18n="marketing.hero.badge.ats">
-            {t(locale, "marketing.hero.badge.ats")}
-          </span>
-        </div>
+          ))
+        }
       </div>
     </div>
   </section>
