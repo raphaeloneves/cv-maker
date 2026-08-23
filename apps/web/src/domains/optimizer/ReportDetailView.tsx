@@ -16,7 +16,7 @@ import { withCvId } from "@/lib/use-cv-id";
 import { CheckIcon, WarningIcon, XIcon } from "@/domains/sections/icons.js";
 import { createRewrite, getReport } from "./api";
 import { RotatingMessages } from "./RotatingMessages";
-import { ScoreGauge } from "./ScoreGauge";
+import { ScoreBar } from "./ScoreBar";
 import { VerdictStamp } from "./VerdictStamp";
 
 const GENERATING_MESSAGE_KEYS = [1, 2, 3, 4, 5, 6].map((n) => `optimizer.detail.generating.message${n}`);
@@ -114,27 +114,24 @@ function VerdictHero({ content, locale }: { content: CvOptimizerReportContent; l
         >
           {content.verdictReasoning}
         </p>
-        {/* Stamp above the gauge, as one centered two-row unit — not spread
-            out across the card's full width next to the text. */}
-        <div className="flex shrink-0 flex-col items-center gap-3">
-          <VerdictStamp verdict={content.verdict} locale={locale} animate />
-          <ScoreGauge
-            score={score}
-            label={t(locale, "optimizer.detail.score.label")}
-            tooltip={t(locale, "optimizer.detail.score.explanation")}
-          />
-        </div>
+        <VerdictStamp verdict={content.verdict} locale={locale} animate />
       </div>
+      <ScoreBar
+        score={score}
+        label={t(locale, "optimizer.detail.score.label")}
+        tooltip={t(locale, "optimizer.detail.score.explanation")}
+        className="border-t border-[var(--border-on-light)] pt-6"
+      />
       <PanelBreakdown panelScores={content.panelScores} locale={locale} />
     </Card>
   );
 }
 
 /** Each of the three panelists' own independent 0-100 read, laid out below
- * the combined gauge above — the whole point of asking them separately (see
- * computePanelScorePercent's own doc comment) is lost if only the blended
- * number ever reaches the page. A split panel should be visibly a split
- * panel, not just a slightly lower gauge. */
+ * the combined score bar above — the whole point of asking them separately
+ * (see computePanelScorePercent's own doc comment) is lost if only the
+ * blended number ever reaches the page. A split panel should be visibly a
+ * split panel, not just a slightly lower bar. */
 function PanelBreakdown({ panelScores, locale }: { panelScores: CvOptimizerPanelScore[]; locale: BuilderLocale }) {
   return (
     <div className="grid gap-3 border-t border-[var(--border-on-light)] pt-6 sm:grid-cols-3">

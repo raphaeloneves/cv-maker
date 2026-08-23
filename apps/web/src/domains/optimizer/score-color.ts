@@ -4,8 +4,8 @@
 // natural midpoint, green at the top: low score reads as risk, high score
 // reads as a real pass, and the accent color it lands on at 50 is still the
 // same orange used everywhere else in the app, not an arbitrary new hue.
-// Shared by ScoreGauge (radial) and ScoreBar (linear) so the same score
-// always renders the same color regardless of which shape is showing it.
+// Shared by every place a score is rendered (currently just ScoreBar) so the
+// same score always renders the same color no matter where it's shown.
 const COLOR_STOPS: Array<{ at: number; rgb: [number, number, number] }> = [
   { at: 0, rgb: [194, 59, 59] }, // --danger
   { at: 50, rgb: [232, 100, 12] }, // --orange
